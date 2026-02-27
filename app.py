@@ -15,96 +15,77 @@ role = st.sidebar.radio("Select Anchor Role:",
 
 st.divider()
 
-# --- 1. KISHORE (API) - ENHANCED OPERATIONAL LOGIC ---
+# --- 1. KISHORE (API) ---
 if role == "API (Kishore)":
     st.header("API Site Entry - Kishore Anchor")
     with st.form("api_form"):
-        st.subheader("Sales & Enquiry Tracking")
-        c1, c2, c3 = st.columns(3)
+        st.subheader("Sales & Technical Tracking")
+        c1, c2 = st.columns(2)
         new_enq = c1.text_input("New Enquiries")
         off_iss = c2.number_input("Offers Issued (Nos)", min_value=0, step=1)
-        off_rev = c3.text_input("Offers Under Review / Status")
         
-        c4, c5, c6 = st.columns(3)
-        off_7d = c4.number_input("Offers > 7 Days (Nos)", min_value=0, step=1)
-        dwg_rel = c5.number_input("Drawings Released", min_value=0)
-        des_rev = c6.text_input("Designs Under Review")
+        eng_clar = st.text_area("Engineering Clarifications Pending")
+        clar_age = st.text_area("Clarification Ageing (Days)")
+        mfg_plan = st.text_area("Manufacturing Planned vs Actual")
 
-        st.subheader("Technical & Manufacturing Progress")
-        # Multi-row entry for clarifications
-        eng_clar = st.text_area("Engineering Clarifications Pending (Details)", 
-                                placeholder="List each clarification item here...")
+        st.subheader("Operational & Purchase Integration")
+        proj_code = st.text_input("Project Code(s)", placeholder="e.g. BG-01, BG-05")
         
-        # UPDATED: Text area to match multiple clarifications listed above
-        clar_age = st.text_area("Clarification Ageing (Days per Item)", 
-                                 placeholder="e.g.\nItem 1: 5 Days\nItem 2: 12 Days")
+        # CONDITIONAL TRIGGER
+        has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
         
-        mfg_plan = st.text_area("Manufacturing Planned vs Actual (Detailed Points)", 
-                                placeholder="Enter specific progress points...")
-
-        st.subheader("Operational Integration")
-        c10, c11, c12 = st.columns(3)
-        # ADDED: Project Code field
-        proj_code = c10.text_input("Project Code", placeholder="e.g., BG-API-2026-001")
-        dev_cat = c11.selectbox("Deviation Category", ["N.A", "Manpower", "Design", "Material"])
-        dev_imp = c12.selectbox("Deviation Impact if Continues", ["NO", "YES"])
-        
-        c13, c14, c15 = st.columns(3)
-        ncr_open = c13.text_input("NCR Open (Enter Details)")
-        ncr_imp = c14.selectbox("NCR Impact on Delivery", ["NO", "YES"])
-        # CRITICAL INTEGRATION FIELD
-        crit_dep = c15.text_area("Critical Purchase Dependency", help="Linked to Santhoshi's Desk")
+        if has_dependency == "YES":
+            crit_dep = st.text_area("🔴 List Items & Affected Project Codes", 
+                placeholder="e.g.\n1. 8mm 316 Plate (Codes: BG-01, BG-02)\n2. 5HP Motor (Code: BG-05)")
+        else:
+            st.info("No purchase dependencies flagged for these projects.")
 
         st.subheader("Management & Decisions")
-        c16, c17 = st.columns(2)
-        key_disc = c16.text_input("Key Client Discussions")
-        top_dev = c17.text_input("Top Deviations")
-        
-        c18, c19 = st.columns(2)
-        f_dec = c18.selectbox("Founder Decision Required", ["NO", "YES"])
-        dec_det = c19.text_input("Decision Details")
+        f_dec = st.selectbox("Founder Decision Required", ["NO", "YES"])
+        dec_det = st.text_input("Decision Details / Context")
 
         if st.form_submit_button("Sync API Report"):
-            st.success("Kishore's Report Synced Successfully.")
+            st.success("API Data recorded.")
 
 # --- 2. AMMU (ZLD) ---
 elif role == "ZLD (Ammu)":
     st.header("ZLD Site Entry - Ammu Anchor")
     with st.form("zld_form"):
         st.subheader("Project Execution")
-        z1, z2, z3 = st.columns(3)
-        # Standardized with Project Code logic
-        zld_code = z1.text_input("Project Code")
-        active_proj = z2.selectbox("Active Project", ["150 KLD MEE-MSN", "30KL OIL SYSTEM", "Other"])
-        stage = z3.text_input("Project Stage")
+        z1, z2 = st.columns(2)
+        proj_code = z1.text_input("Project Code(s)")
+        stage = z2.text_input("Project Stage")
 
-        st.subheader("Updates & Integration")
-        z10, z11 = st.columns(2)
-        updates = z10.text_area("'UPDATES' (Major Site Events)")
-        crit_dep = z11.text_input("Critical Purchase Dependency")
-
+        updates = st.text_area("'UPDATES' (Major Site Events)")
+        
+        # CONDITIONAL TRIGGER
+        has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
+        
+        if has_dep_zld == "YES":
+            crit_dep_zld = st.text_area("🔴 List Items & Affected Project Codes", 
+                placeholder="Enter specific material needs here...")
+        
         if st.form_submit_button("Sync ZLD Report"):
-            st.success("Ammu's Report Synced Successfully.")
+            st.success("ZLD Report successfully synced.")
 
 # --- 3. SANTHOSHI (PURCHASE) ---
 elif role == "Purchase (Santhoshi)":
-    st.header("Purchase & Operations Entry - Santhoshi")
+    st.header("Purchase & Operations Control")
     
-    # This acts as the bridge
-    st.subheader("⚠️ Pending Indents from API/ZLD Sites")
-    st.info("Dependencies entered by Kishore or Ammu will appear here.")
-
+    st.subheader("⚠️ High-Priority Site Dependencies")
+    st.error("Site Anchors will flag 'YES' if they are stuck for materials like 316 Plates or Motors.")
+    
     with st.form("purchase_form"):
         p1, p2 = st.columns(2)
         planned = p1.number_input("Planned Manpower", value=62)
         actual = p2.number_input("Actual Manpower", value=52)
         
-        crit_mac = st.text_input("Critical Machines Status")
+        absentees = st.text_area("Absentees Details")
         
-        if st.form_submit_button("Sync Purchase Report"):
-            st.success("Santhoshi's Report Synced Successfully.")
+        if st.form_submit_button("Sync Purchase Log"):
+            st.success("Daily Operations Log Updated.")
 
 # --- 4. MANAGEMENT DASHBOARD ---
 else:
     st.header("B&G Management Analytics")
-    st.write("EOD Summary for B&G Engineering Industries.")
+    st.write("Reviewing EOD logs across all Project Codes.")
