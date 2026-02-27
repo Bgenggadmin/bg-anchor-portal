@@ -41,20 +41,28 @@ def fetch_logs(filename):
     except:
         return pd.DataFrame()
 
-# --- 4. SMART GATEWAY SETTINGS ---
-# Read the role from the WhatsApp or Gateway link
+# --- 4. SMART GATEWAY & PASSWORD PROTECTION ---
+st.sidebar.title("🏢 B&G Engineering")
+
+# INTERNAL PASSWORD GATE (Matches Production/Quality Apps)
+portal_password = st.sidebar.text_input("Enter Portal Password:", type="password")
+
+if portal_password != "7890": # CHANGE THIS to your actual password
+    st.warning("🔒 Please enter the correct password to access the reporting portal.")
+    st.stop() # This prevents anyone from seeing your tables without the PIN
+
+# ROLE ROUTING LOGIC (For WhatsApp Links)
 query_params = st.query_params
 url_role = query_params.get("role", "API")
 
-# Map URL short-names to your full sidebar names
 role_map = {"API": 0, "ZLD": 1, "Purchase": 2, "Founder": 3}
-default_index = role_map.get(url_role, 0)
+default_idx = role_map.get(url_role, 0)
 
 role = st.sidebar.radio(
     "Select Anchor Role:",
     ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Founder Dashboard"],
-    index=default_index
-) 
+    index=default_idx
+)
 
 # --- 5. ROLE: API (KISHORE) ---
 if role == "API (Kishore)":
