@@ -13,38 +13,40 @@ st.sidebar.title("🏢 B&G Engineering")
 role = st.sidebar.radio("Select Anchor Role:", 
     ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Management Dashboard"])
 
-# 5:30 PM EOD Nudge
-if now_ist.hour >= 17 and now_ist.minute >= 30:
-    st.sidebar.warning("⏰ **EOD REMINDER:** Please submit your site report before leaving.")
-
 st.divider()
 
-# --- 1. KISHORE (API) - 23 COLUMN INTEGRATION ---
+# --- 1. KISHORE (API) - CUSTOMIZED FIELDS ---
 if role == "API (Kishore)":
     st.header("API Site Entry - Kishore Anchor")
     with st.form("api_form"):
-        st.subheader("Sales & Engineering Tracking")
+        st.subheader("Sales & Enquiry Tracking")
         c1, c2, c3 = st.columns(3)
         new_enq = c1.text_input("New Enquiries")
-        off_iss = c2.selectbox("Offers Issued", ["Yes", "No", "N/A"])
+        # UPDATED: Now numeric entry
+        off_iss = c2.number_input("Offers Issued (Nos)", min_value=0, step=1)
         off_rev = c3.text_input("Offers Under Review / Status")
         
         c4, c5, c6 = st.columns(3)
-        off_7d = c4.selectbox("Offers > 7 Days", ["Yes", "No"])
+        # UPDATED: Now numeric entry
+        off_7d = c4.number_input("Offers > 7 Days (Nos)", min_value=0, step=1)
         dwg_rel = c5.number_input("Drawings Released", min_value=0)
         des_rev = c6.text_input("Designs Under Review")
 
-        st.subheader("Technical Progress")
-        c7, c8, c9 = st.columns(3)
-        eng_clar = c7.number_input("Engineering Clarifications Pending", min_value=0)
-        clar_age = c8.number_input("Clarification Ageing (Days)", min_value=0)
-        mfg_plan = c9.text_input("Manufacturing Planned vs Actual")
+        st.subheader("Technical & Manufacturing Progress")
+        # UPDATED: Text area for multiple points/rows
+        eng_clar = st.text_area("Engineering Clarifications Pending (Details)", placeholder="Enter each clarification in a new line...")
+        
+        c7, c8 = st.columns(2)
+        clar_age = c7.number_input("Clarification Ageing (Days)", min_value=0)
+        # UPDATED: Text area for "many points"
+        mfg_plan = st.text_area("Manufacturing Planned vs Actual (Detailed Points)", placeholder="1. Item A: Planned vs Actual\n2. Item B: Status...")
 
         st.subheader("Operational Integration")
         c10, c11, c12 = st.columns(3)
         dev_cat = c10.selectbox("Deviation Category", ["N.A", "Manpower", "Design", "Material"])
         dev_imp = c11.selectbox("Deviation Impact if Continues", ["NO", "YES"])
-        ncr_open = c12.selectbox("NCR Open", ["NO", "YES"])
+        # UPDATED: Changed to Text Entry
+        ncr_open = c12.text_input("NCR Open (Enter Details)", placeholder="Describe open NCRs...")
 
         c13, c14, c15 = st.columns(3)
         ncr_imp = c13.selectbox("NCR Impact on Delivery", ["NO", "YES"])
@@ -68,27 +70,15 @@ if role == "API (Kishore)":
 elif role == "ZLD (Ammu)":
     st.header("ZLD Site Entry - Ammu Anchor")
     with st.form("zld_form"):
-        st.subheader("Enquiry & Design Status")
-        z1, z2, z3 = st.columns(3)
-        new_enq = z1.text_input("New Enquiries")
-        off_iss = z2.text_input("Offers Issued")
-        off_rev = z3.text_input("Offers Under Review")
-
-        z4, z5, z6 = st.columns(3)
-        off_7d = z4.text_input("Offers > 15 Days")
-        des_comp = z5.text_input("Designs Completed")
-        des_rev = z6.text_input("Designs Under Review")
-
         st.subheader("Project Execution")
-        z7, z8, z9 = st.columns(3)
-        active_proj = z7.selectbox("Active Project", ["150 KLD MEE-MSN", "30KL OIL SYSTEM", "Other"])
-        stage = z8.text_input("Project Stage")
-        sch_risk = z9.selectbox("Schedule Risk", ["NO", "YES"])
+        z1, z2, z3 = st.columns(3)
+        active_proj = z1.selectbox("Active Project", ["150 KLD MEE-MSN", "30KL OIL SYSTEM", "Other"])
+        stage = z2.text_input("Project Stage")
+        sch_risk = z3.selectbox("Schedule Risk", ["NO", "YES"])
 
         st.subheader("Updates & Integration")
         z10, z11 = st.columns(2)
         updates = z10.text_area("'UPDATES' (Major Site Events)")
-        # CRITICAL INTEGRATION FIELD
         crit_dep = z11.text_input("Critical Purchase Dependency")
 
         z12, z13 = st.columns(2)
@@ -102,8 +92,7 @@ elif role == "ZLD (Ammu)":
 elif role == "Purchase (Santhoshi)":
     st.header("Purchase & Operations Entry - Santhoshi")
     
-    # CROSS-FUNCTIONAL BRIDGE
-    st.subheader("⚠️ Pending Indents from API/ZLD Sites")
+    st.subheader("⚠️ Pending Technical Dependencies (from Kishore/Ammu)")
     st.info("Dependencies entered by Kishore or Ammu will appear here.")
 
     with st.form("purchase_form"):
@@ -119,21 +108,10 @@ elif role == "Purchase (Santhoshi)":
         crit_mac = p5.text_input("Critical Machines Status")
         downtime = p6.text_input("Breakdown / Downtime")
 
-        p7, p8, p9 = st.columns(3)
-        transp = p7.text_input("Transportation Status")
-        prod_supp = p8.selectbox("Production Supported", ["Yes", "No"])
-        site_imp = p9.selectbox("Site Impacted", ["No", "Yes"])
-
-        st.subheader("Management & Decisions")
-        p10, p11 = st.columns(2)
-        f_dec = p10.selectbox("Founder Decision Required", ["No", "Yes"])
-        dec_det = p11.text_input("Decision Details")
-
         if st.form_submit_button("Sync Purchase Report"):
             st.success("Santhoshi's Report Synced Successfully.")
 
 # --- 4. MANAGEMENT DASHBOARD ---
 else:
     st.header("B&G Management Analytics")
-    st.info("Historical data and comparative analytics will be displayed here.")
-    st.download_button("📥 Export Master Excel", "Date,Anchor,Project,Critical_Dependency\n2026-02-27,API,10KL,Pumps", "bg_master.csv")
+    st.write("Combined site data will be reflected here for EOD review.")
