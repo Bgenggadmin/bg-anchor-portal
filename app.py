@@ -18,9 +18,11 @@ def sync_data_to_github(repo_name, file_name, new_data_df, anchor_name):
         file_contents = repo.get_contents(file_name)
         existing_data = pd.read_csv(io.StringIO(file_contents.decoded_content.decode()))
         
+        # Add metadata
         new_data_df['Timestamp'] = datetime.now(IST).strftime("%Y-%m-%d %H:%M")
         new_data_df['Anchor'] = anchor_name
         
+        # Merge and Update
         updated_df = pd.concat([existing_data, new_data_df], ignore_index=True)
         repo.update_file(
             path=file_contents.path,
@@ -89,12 +91,12 @@ if role == "API (Kishore)":
             if founder_dec == "YES":
                 trigger_whatsapp_notification("Kishore (API)", dec_context)
             
-            # Sync Logic
-            valid_eng = api_eng_data[api_eng_data["Job"] != ""]
+            # Sync Logic for Engineering Table
+            valid_eng = api_eng_data[api_eng_data["Job"] != ""].copy()
             if not valid_eng.empty:
                 if sync_data_to_github("bg-api-logs", "engineering_audit.csv", valid_eng, "Kishore"):
                     st.success("API Report Synced!")
-                    st.rerun() # FORCES DATA TO CLEAR FROM CELLS
+                    st.rerun() # Clears form after success
 
 # --- 5. ROLE: ZLD (AMMU) ---
 elif role == "ZLD (Ammu)":
@@ -103,10 +105,10 @@ elif role == "ZLD (Ammu)":
         zld_proj_df = pd.DataFrame([{"Project Name": "", "Current Stage": "Fabrication", "Schedule Risk": "NO"}])
         zld_proj_data = st.data_editor(zld_proj_df, num_rows="dynamic", use_container_width=True, key="zld_proj")
         f_dec_z = st.selectbox("Founder Decision Required", ["NO", "YES"])
-        dec_det_z = st.text_input("Decision Details")
+        dec_det_z = st.text_area("Decision Details")
 
         if st.form_submit_button("Sync ZLD Report"):
-            valid_zld = zld_proj_data[zld_proj_data["Project Name"] != ""]
+            valid_zld = zld_proj_data[zld_proj_data["Project Name"] != ""].copy()
             if not valid_zld.empty:
                 if sync_data_to_github("bg-zld-logs", "project_execution.csv", valid_zld, "Ammu"):
                     st.success("ZLD Data Synced!")
@@ -123,23 +125,21 @@ elif role == "Purchase (Santhoshi)":
             st.success("Operations Log Updated.")
             st.rerun()
 
-# --- 7. MANAGEMENT DASHBOARD ---
+# --- 7. MANAGEMENT DASHBOARD (FIXED INDENTATION) ---
 else:
     st.header("📊 B&G Management Analytics")
-    st.info("Consolidating live factory data...")
-    st.divider()
+    st.info("Reading live logs from GitHub Cloud...")
     
-    # SHOW TABLES IN DASHBOARD
-    st.subheader("🏗️ Recent API Engineering Logs")
-    df_api = fetch_logs("bg-api-logs", "engineering_audit.csv")
-    if not df_api.empty:
-        st.dataframe(df_api.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+    st.subheader("🏗️ Recent Engineering Logs")
+    df_dashboard = fetch_logs("bg-api-logs", "engineering_audit.csv")
+    if not df_dashboard.empty:
+        st.dataframe(df_dashboard.sort_values(by="Timestamp", ascending=False), use_container_width=True)
 
-# --- 8. GLOBAL SUMMARY TABLE (SHOWS AT BOTTOM OF ALL PAGES) ---
+# --- 8. GLOBAL SUMMARY TABLE (BOTTOM OF EVERY PAGE) ---
 st.divider()
 st.subheader("📋 Live Factory Overview (EOD Summary)")
 summary_df = fetch_logs("bg-api-logs", "engineering_audit.csv")
 if not summary_df.empty:
     st.dataframe(summary_df.tail(10), use_container_width=True)
 else:
-    st.info("No logs found. Once Kishore syncs data, the summary will appear here.")
+    st.info("No logs found. Check your GITHUB_TOKEN if data was already synced.")
