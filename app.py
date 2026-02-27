@@ -166,8 +166,8 @@ elif role == "Purchase (Santhoshi)":
     actual = p2.number_input("Actual Manpower", value=52, key=f"a_man_{sk}")
     temp_mp = p3.selectbox("Temp Manpower Used?", ["No", "Yes"], key=f"temp_{sk}")
 
-    # 2. MACHINE & TRANSPORT STATUS
-    st.subheader("⚙️ 2. Machine & Transport Status")
+    # 2. CRITICAL MACHINERY RUNNING STATUS
+    st.subheader("⚙️ 2. Crtical Machinery Running Status")
     ops_df = pd.DataFrame([
         {"Asset": "Plasma Machine", "Status": "Working", "Issue": "None"},
         {"Asset": "EOT Crane", "Status": "Working", "Issue": "None"},
