@@ -45,13 +45,12 @@ def fetch_logs(filename):
 role = st.sidebar.radio("Role:", ["API (Kishore)", "Founder Dashboard"])
 sk = st.session_state.sync_count 
 
-# --- 5. ROLE: API (KISHORE) - 5 INDEPENDENT TABLES ---
+# --- 5. ROLE: API (KISHORE) ---
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
 
-    # 1. Purchase Dependencies - UPDATED WITH DATE SELECTOR
+    # 1. Purchase Dependencies
     st.subheader("🔴 Critical Purchase Dependencies")
-    # We initialize with a date object so the editor knows it's a calendar field
     init_pur_df = pd.DataFrame([{"Job": "", "Material": "", "Req_Date": date.today(), "Urgency": "High"}])
     
     api_pur = st.data_editor(
@@ -59,13 +58,7 @@ if role == "API (Kishore)":
         num_rows="dynamic", 
         use_container_width=True, 
         key=f"pur_{sk}",
-        column_config={
-            "Req_Date": st.column_config.DateColumn(
-                "Required Date",
-                format="YYYY-MM-DD",
-                step=1,
-            )
-        }
+        column_config={"Req_Date": st.column_config.DateColumn("Required Date", format="YYYY-MM-DD")}
     )
 
     # 2. Sales & Enquiry
@@ -90,13 +83,11 @@ if role == "API (Kishore)":
         dec_context = st.text_area("Decision Context")
         
         if st.form_submit_button("🚀 SYNC ALL TABLES"):
-            # Sync each table to its own file
             sync_to_private_file(api_pur[api_pur["Job"] != ""], "api_purchase.csv")
             sync_to_private_file(api_sales[api_sales["Client"] != ""], "api_sales.csv")
             sync_to_private_file(api_mfg[api_mfg["Job Code"] != ""], "api_manufacturing.csv")
             sync_to_private_file(api_ncr[api_ncr["Detail"] != ""], "api_ncr.csv")
             
-            # Management Decision log
             mgmt_df = pd.DataFrame([{"Decision_Req": f_dec, "Context": dec_context}])
             sync_to_private_file(mgmt_df, "api_management.csv")
             
@@ -104,21 +95,29 @@ if role == "API (Kishore)":
             st.session_state.sync_count += 1
             st.rerun()
 
-    # INDIVIDUAL SUMMARY TABLES
+    # --- ANCHOR LOGS DOWNLOAD (EXCEL) ---
     st.divider()
-    st.subheader("📋 Recent Submission Summary (API)")
-    tabs = st.tabs(["Purchase", "Sales", "Mfg", "NCR", "Mgmt"])
-    tabs[0].dataframe(fetch_logs("api_purchase.csv"), use_container_width=True)
-    tabs[1].dataframe(fetch_logs("api_sales.csv"), use_container_width=True)
-    tabs[2].dataframe(fetch_logs("api_manufacturing.csv"), use_container_width=True)
-    tabs[3].dataframe(fetch_logs("api_ncr.csv"), use_container_width=True)
-    tabs[4].dataframe(fetch_logs("api_management.csv"), use_container_width=True)
+    st.subheader("📥 Download Your Submission Logs")
+    
+    anchor_buffer = io.BytesIO()
+    with pd.ExcelWriter(anchor_buffer, engine='xlsxwriter') as writer:
+        fetch_logs("api_purchase.csv").to_excel(writer, sheet_name='Purchase', index=False)
+        fetch_logs("api_sales.csv").to_excel(writer, sheet_name='Sales', index=False)
+        fetch_logs("api_manufacturing.csv").to_excel(writer, sheet_name='Manufacturing', index=False)
+        fetch_logs("api_ncr.csv").to_excel(writer, sheet_name='Quality_NCR', index=False)
+        fetch_logs("api_management.csv").to_excel(writer, sheet_name='Management', index=False)
+    
+    st.download_button(
+        label="📥 Download My API Excel Report",
+        data=anchor_buffer.getvalue(),
+        file_name=f"Kishore_API_Log_{date.today()}.xlsx",
+        mime="application/vnd.ms-excel"
+    )
 
-# --- 6. FOUNDER DASHBOARD & EXCEL DOWNLOAD ---
+# --- 6. FOUNDER DASHBOARD ---
 elif role == "Founder Dashboard":
     st.header("📊 Founder Master Overview")
     
-    # EXCEL GENERATOR
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         fetch_logs("api_purchase.csv").to_excel(writer, sheet_name='Purchase', index=False)
@@ -130,8 +129,7 @@ elif role == "Founder Dashboard":
     st.download_button(
         label="📥 Download Master API Excel Report",
         data=buffer.getvalue(),
-        file_name=f"BG_API_Report_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
+        file_name=f"BG_Master_Report_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
         mime="application/vnd.ms-excel"
     )
-    
     st.write("Review all 5 sheets in the downloaded file for full details.")
