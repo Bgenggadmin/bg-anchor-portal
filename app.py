@@ -41,11 +41,20 @@ def fetch_logs(filename):
     except:
         return pd.DataFrame()
 
-# --- 4. SIDEBAR (UPDATED TO INCLUDE ALL ANCHORS) ---
-st.sidebar.title("🏢 B&G Engineering")
-role = st.sidebar.radio("Select Anchor Role:", 
-    ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Founder Dashboard"])
-sk = st.session_state.sync_count 
+# --- 4. SMART GATEWAY SETTINGS ---
+# Read the role from the WhatsApp or Gateway link
+query_params = st.query_params
+url_role = query_params.get("role", "API")
+
+# Map URL short-names to your full sidebar names
+role_map = {"API": 0, "ZLD": 1, "Purchase": 2, "Founder": 3}
+default_index = role_map.get(url_role, 0)
+
+role = st.sidebar.radio(
+    "Select Anchor Role:",
+    ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Founder Dashboard"],
+    index=default_index
+) 
 
 # --- 5. ROLE: API (KISHORE) ---
 if role == "API (Kishore)":
