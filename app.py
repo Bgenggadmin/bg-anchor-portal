@@ -19,11 +19,7 @@ def sync_to_private_file(df, filename):
         g = Github(st.secrets["GITHUB_TOKEN"])
         repo = g.get_repo("Bgenggadmin/bg-anchor-portal")
         
-        # Format dates for CSV storage
-        if 'Req_Date' in df.columns:
-            df['Req_Date'] = pd.to_datetime(df['Req_Date']).dt.strftime('%Y-%m-%d')
-            
-        df['Entry_Date'] = datetime.now(IST).strftime("%Y-%m-%d")
+        df['Date'] = datetime.now(IST).strftime("%Y-%m-%d")
         df['Timestamp'] = datetime.now(IST).strftime("%H:%M")
 
         try:
@@ -49,12 +45,13 @@ def fetch_logs(filename):
 role = st.sidebar.radio("Role:", ["API (Kishore)", "Founder Dashboard"])
 sk = st.session_state.sync_count 
 
-# --- 5. ROLE: API (KISHORE) ---
+# --- 5. ROLE: API (KISHORE) - 5 INDEPENDENT TABLES ---
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
 
-    # 1. Purchase Dependencies (WITH AUTO DATE SELECTOR)
+    # 1. Purchase Dependencies - UPDATED WITH DATE SELECTOR
     st.subheader("🔴 Critical Purchase Dependencies")
+    # We initialize with a date object so the editor knows it's a calendar field
     init_pur_df = pd.DataFrame([{"Job": "", "Material": "", "Req_Date": date.today(), "Urgency": "High"}])
     
     api_pur = st.data_editor(
@@ -71,60 +68,70 @@ if role == "API (Kishore)":
         }
     )
 
-    # 2. Other Operational Tables
+    # 2. Sales & Enquiry
     st.subheader("📊 Sales & Enquiry Tracking")
     api_sales = st.data_editor(pd.DataFrame([{"Client": "", "Offers": 0, "Status": "Review"}]), 
                                num_rows="dynamic", use_container_width=True, key=f"sales_{sk}")
 
-    st.subheader("🛠️ Technical & Manufacturing")
+    # 3. Technical & Manufacturing
+    st.subheader("🛠️ Technical & Manufacturing Progress")
     api_mfg = st.data_editor(pd.DataFrame([{"Job Code": "", "Planned": "", "Actual": "", "Delay_Reason": ""}]), 
                                num_rows="dynamic", use_container_width=True, key=f"mfg_{sk}")
 
+    # 4. Deviations & NCR
     st.subheader("⚠️ Deviations & Quality (NCR)")
     api_ncr = st.data_editor(pd.DataFrame([{"Category": "Material", "Detail": "", "Impact": "NO"}]), 
                                num_rows="dynamic", use_container_width=True, key=f"ncr_{sk}")
 
+    # 5. Management Decisions
+    st.subheader("🧠 Management Decisions")
     with st.form(f"mgmt_form_{sk}"):
-        st.subheader("🧠 Management Decisions")
         f_dec = st.selectbox("Founder Decision Required?", ["NO", "YES"])
         dec_context = st.text_area("Decision Context")
         
         if st.form_submit_button("🚀 SYNC ALL TABLES"):
+            # Sync each table to its own file
             sync_to_private_file(api_pur[api_pur["Job"] != ""], "api_purchase.csv")
             sync_to_private_file(api_sales[api_sales["Client"] != ""], "api_sales.csv")
             sync_to_private_file(api_mfg[api_mfg["Job Code"] != ""], "api_manufacturing.csv")
             sync_to_private_file(api_ncr[api_ncr["Detail"] != ""], "api_ncr.csv")
             
+            # Management Decision log
             mgmt_df = pd.DataFrame([{"Decision_Req": f_dec, "Context": dec_context}])
             sync_to_private_file(mgmt_df, "api_management.csv")
             
-            st.success("✅ Reports Synced! Forms Cleared.")
+            st.success("✅ All 5 Reports Synced Separately! Forms Cleared.")
             st.session_state.sync_count += 1
             st.rerun()
 
-    # --- ANCHOR EXCEL DOWNLOAD ---
+    # INDIVIDUAL SUMMARY TABLES
     st.divider()
-    st.subheader("📥 Download Your Reports")
-    
-    try:
-        anchor_buffer = io.BytesIO()
-        with pd.ExcelWriter(anchor_buffer, engine='xlsxwriter') as writer:
-            fetch_logs("api_purchase.csv").to_excel(writer, sheet_name='Purchase', index=False)
-            fetch_logs("api_sales.csv").to_excel(writer, sheet_name='Sales', index=False)
-            fetch_logs("api_manufacturing.csv").to_excel(writer, sheet_name='Manufacturing', index=False)
-            fetch_logs("api_ncr.csv").to_excel(writer, sheet_name='Quality_NCR', index=False)
-            fetch_logs("api_management.csv").to_excel(writer, sheet_name='Management', index=False)
-        
-        st.download_button(
-            label="📥 Download My API Logs (Excel)",
-            data=anchor_buffer.getvalue(),
-            file_name=f"Kishore_API_Log_{date.today()}.xlsx",
-            mime="application/vnd.ms-excel"
-        )
-    except Exception as e:
-        st.error("Excel module not ready. Please ensure 'xlsxwriter' is in requirements.txt.")
+    st.subheader("📋 Recent Submission Summary (API)")
+    tabs = st.tabs(["Purchase", "Sales", "Mfg", "NCR", "Mgmt"])
+    tabs[0].dataframe(fetch_logs("api_purchase.csv"), use_container_width=True)
+    tabs[1].dataframe(fetch_logs("api_sales.csv"), use_container_width=True)
+    tabs[2].dataframe(fetch_logs("api_manufacturing.csv"), use_container_width=True)
+    tabs[3].dataframe(fetch_logs("api_ncr.csv"), use_container_width=True)
+    tabs[4].dataframe(fetch_logs("api_management.csv"), use_container_width=True)
 
-# --- 6. FOUNDER DASHBOARD ---
+# --- 6. FOUNDER DASHBOARD & EXCEL DOWNLOAD ---
 elif role == "Founder Dashboard":
     st.header("📊 Founder Master Overview")
-    # Logic to fetch and show all logs combined for you
+    
+    # EXCEL GENERATOR
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        fetch_logs("api_purchase.csv").to_excel(writer, sheet_name='Purchase', index=False)
+        fetch_logs("api_sales.csv").to_excel(writer, sheet_name='Sales', index=False)
+        fetch_logs("api_manufacturing.csv").to_excel(writer, sheet_name='Manufacturing', index=False)
+        fetch_logs("api_ncr.csv").to_excel(writer, sheet_name='Quality_NCR', index=False)
+        fetch_logs("api_management.csv").to_excel(writer, sheet_name='Management', index=False)
+    
+    st.download_button(
+        label="📥 Download Master API Excel Report",
+        data=buffer.getvalue(),
+        file_name=f"BG_API_Report_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
+        mime="application/vnd.ms-excel"
+    )
+    
+    st.write("Review all 5 sheets in the downloaded file for full details.")
