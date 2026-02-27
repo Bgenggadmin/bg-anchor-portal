@@ -44,17 +44,18 @@ def fetch_logs(filename):
 # --- 4. SMART GATEWAY & PASSWORD PROTECTION ---
 st.sidebar.title("🏢 B&G Engineering")
 
-# INTERNAL PASSWORD GATE (Matches Production/Quality Apps)
+# INTERNAL PASSWORD GATE (Matches your Production/Quality Apps)
 portal_password = st.sidebar.text_input("Enter Portal Password:", type="password")
 
-if portal_password != "7890": # CHANGE THIS to your actual password
+if portal_password != "7890": # <--- CHANGE THIS to your actual portal password
     st.warning("🔒 Please enter the correct password to access the reporting portal.")
-    st.stop() # This prevents anyone from seeing your tables without the PIN
+    st.stop() 
 
-# ROLE ROUTING LOGIC (For WhatsApp Links)
+# ROLE ROUTING LOGIC (Reads the WhatsApp Link)
 query_params = st.query_params
 url_role = query_params.get("role", "API")
 
+# Map the URL word to the Sidebar position
 role_map = {"API": 0, "ZLD": 1, "Purchase": 2, "Founder": 3}
 default_idx = role_map.get(url_role, 0)
 
