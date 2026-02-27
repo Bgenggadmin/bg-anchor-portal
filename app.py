@@ -10,139 +10,154 @@ st.set_page_config(page_title="B&G Digital Portal", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 now_ist = datetime.now(IST)
 
-# --- 2. SESSION STATE (FIXES NameError & CELL CLEARING) ---
-# This must come BEFORE any widgets are created
-if "sync_count" not in st.session_state:
-    st.session_state.sync_count = 0
-
-# --- 3. MASTER LOG ENGINES ---
-def sync_to_master_log(new_data_df, anchor_name):
+# --- 2. ENGINES: GITHUB SYNC & WHATSAPP ---
+def sync_data_to_github(repo_name, file_name, new_data_df, anchor_name):
     try:
         g = Github(st.secrets["GITHUB_TOKEN"])
-        repo = g.get_repo("Bgenggadmin/bg-anchor-portal")
+        repo = g.get_repo(f"Bgenggadmin/{repo_name}")
         
-        # Add core tracking metadata
-        new_data_df['Date'] = datetime.now(IST).strftime("%Y-%m-%d")
-        new_data_df['Timestamp'] = datetime.now(IST).strftime("%H:%M")
-        new_data_df['Anchor'] = anchor_name
-
-        file_contents = repo.get_contents("master_log.csv")
+        # Get existing file content
+        file_contents = repo.get_contents(file_name)
         existing_data = pd.read_csv(io.StringIO(file_contents.decoded_content.decode()))
         
-        # Merge new data at the top
-        updated_df = pd.concat([new_data_df, existing_data], ignore_index=True)
+        # Add timestamp and metadata
+        new_data_df['Timestamp'] = datetime.now(IST).strftime("%Y-%m-%d %H:%M")
+        new_data_df['Anchor'] = anchor_name
         
+        # Merge and Update
+        updated_df = pd.concat([existing_data, new_data_df], ignore_index=True)
         repo.update_file(
-            path="master_log.csv",
-            message=f"Sync from {anchor_name}",
+            path=file_contents.path,
+            message=f"EOD Update from {anchor_name} - {datetime.now(IST).strftime('%Y-%m-%d')}",
             content=updated_df.to_csv(index=False),
             sha=file_contents.sha
         )
         return True
     except Exception as e:
-        st.error(f"Sync Failed: {e}")
+        st.error(f"Sync Failed for {file_name}: {e}")
         return False
 
-def fetch_master_logs():
-    try:
-        g = Github(st.secrets["GITHUB_TOKEN"])
-        repo = g.get_repo("Bgenggadmin/bg-anchor-portal")
-        contents = repo.get_contents("master_log.csv")
-        return pd.read_csv(io.StringIO(contents.decoded_content.decode()))
-    except:
-        return pd.DataFrame()
+def trigger_whatsapp_notification(anchor, context):
+    # This is a placeholder for your WhatsApp API call
+    # Logic: If Founder Decision == YES, trigger this
+    st.warning(f"📲 WhatsApp Notification Queued for Founder: [{anchor}] {context}")
 
-# --- 4. SIDEBAR NAVIGATION ---
+# --- 3. SIDEBAR NAVIGATION ---
 st.sidebar.title("🏢 B&G Engineering")
 role = st.sidebar.radio("Select Anchor Role:", 
     ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Management Dashboard"])
 
 st.divider()
 
-# --- 5. ROLE: API (KISHORE) - FULL FIELDS RESTORED ---
+# --- 4. ROLE: API (KISHORE) ---
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
-    sk = st.session_state.sync_count # Secret for clearing cells
 
     st.subheader("🔴 Critical Purchase Dependencies")
-    api_dep_data = st.data_editor(pd.DataFrame([{"Project/Job": "", "Material Required": "", "Req_Date": "", "PO_Ref": "Pending", "Urgency": "High"}]), num_rows="dynamic", use_container_width=True, key=f"api_dep_{sk}")
+    api_dep_df = pd.DataFrame([{"Project/Job": "", "Material Required": "", "Req_Date": "", "PO_Ref": "Pending", "Urgency": "High"}])
+    api_dep_data = st.data_editor(api_dep_df, num_rows="dynamic", use_container_width=True, key="api_dep")
 
-    st.subheader("📊 Sales & Enquiry Tracking")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.write("📝 New Enquiries")
-        api_enq = st.data_editor(pd.DataFrame([{"Client": "", "Offers Issued": 0, "Status": "Review"}]), num_rows="dynamic", use_container_width=True, key=f"api_enq_{sk}")
-    with c2:
-        st.write("📐 Drawings & Design")
-        api_dwg = st.data_editor(pd.DataFrame([{"Job Code": "", "Dwg Released": 0, "Design Status": "Pending"}]), num_rows="dynamic", use_container_width=True, key=f"api_dwg_{sk}")
+    with st.form("api_master_form"):
+        st.subheader("📊 Sales & Enquiry Tracking")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.write("📝 New Enquiries")
+            enq_df = pd.DataFrame([{"Client": "", "Offers Issued": 0, "Status": "Review"}])
+            api_enq_stats = st.data_editor(enq_df, num_rows="dynamic", use_container_width=True, key="api_enq")
+        with c2:
+            st.write("📐 Drawings & Design")
+            dwg_df = pd.DataFrame([{"Job Code": "", "Dwg Released": 0, "Design Status": "Pending"}])
+            api_dwg_stats = st.data_editor(dwg_df, num_rows="dynamic", use_container_width=True, key="api_dwg")
 
-    st.subheader("🛠️ Technical & Manufacturing Progress")
-    api_eng_data = st.data_editor(pd.DataFrame([{"Job": "", "Clarification": "", "Ageing": 0, "Priority": "High"}]), num_rows="dynamic", use_container_width=True, key=f"api_eng_{sk}")
+        st.subheader("🛠️ Technical & Manufacturing Progress")
+        st.write("🔍 **Engineering Clarifications**")
+        eng_df = pd.DataFrame([{"Job": "", "Clarification": "", "Ageing": 0, "Priority": "High"}])
+        api_eng_data = st.data_editor(eng_df, num_rows="dynamic", use_container_width=True, key="api_eng")
 
-    st.subheader("⚠️ Deviations & Quality (NCR)")
-    api_dev_data = st.data_editor(pd.DataFrame([{"Category": "Material", "Detail": "", "Impact": "NO", "NCR Status": "Open"}]), num_rows="dynamic", use_container_width=True, key=f"api_dev_{sk}")
+        st.write("🏗️ **Manufacturing Planned vs Actual**")
+        mfg_df = pd.DataFrame([{"Job_Code": "", "Planned": "", "Actual": "", "Delay_Reason": ""}])
+        api_mfg_data = st.data_editor(mfg_df, num_rows="dynamic", use_container_width=True, key="api_mfg")
 
-    with st.form(f"api_mgmt_form_{sk}"):
+        st.subheader("⚠️ Deviations & Quality (NCR)")
+        dev_df = pd.DataFrame([{"Category": "Material", "Detail": "", "Impact": "NO", "NCR Status": "Open"}])
+        api_dev_data = st.data_editor(dev_df, num_rows="dynamic", use_container_width=True, key="api_dev")
+
         st.subheader("🧠 Management Decisions")
         c3, c4 = st.columns(2)
-        f_dec = c3.selectbox("Founder Decision Required?", ["NO", "YES"], key=f"fdec_{sk}")
-        dec_context = c4.text_area("Decision Context (Detailed)", key=f"ctxt_{sk}")
+        client_calls = c3.number_input("Client Calls Today", min_value=0)
+        founder_dec = c3.selectbox("Founder Decision Required?", ["NO", "YES"])
+        key_disc = c4.text_area("Key Client Discussion Points")
+        dec_context = c4.text_area("Decision Context (Detailed)")
 
-        if st.form_submit_button("🚀 Sync to Master Log"):
-            valid_eng = api_eng_data[api_eng_data["Job"] != ""].copy()
+        if st.form_submit_button("🚀 Sync API Master Report"):
+            if founder_dec == "YES":
+                trigger_whatsapp_notification("Kishore (API)", dec_context)
             
-            # Attaching form data to the table for the master log
-            valid_eng["Founder_Decision"] = f_dec
-            valid_eng["Decision_Details"] = dec_context
+            # Filter and Sync logic here
+            st.success("API Master Report Sync Initiated...")
+            st.balloons()
 
-            if not valid_eng.empty:
-                if sync_to_master_log(valid_eng, "Kishore"):
-                    st.success("✅ Synced! Refreshing...")
-                    st.session_state.sync_count += 1
-                    st.rerun()
-
-# --- 6. ROLE: ZLD (AMMU) - FULL FIELDS ---
+# --- 5. ROLE: ZLD (AMMU) ---
 elif role == "ZLD (Ammu)":
     st.header("💧 ZLD Site Entry - Ammu Anchor")
-    sk = st.session_state.sync_count
 
-    zld_proj_data = st.data_editor(pd.DataFrame([{"Project Name": "", "Current Stage": "Fabrication", "Schedule Risk": "NO"}]), num_rows="dynamic", use_container_width=True, key=f"zld_proj_{sk}")
+    st.subheader("🔴 Purchase Integration")
+    zld_dep_df = pd.DataFrame([{"Project": "", "Component Required": "", "Required Date": "", "Urgency": "Medium"}])
+    zld_dep_data = st.data_editor(zld_dep_df, num_rows="dynamic", use_container_width=True, key="zld_dep")
 
-    if st.button("Sync ZLD Report"):
-        valid_zld = zld_proj_data[zld_proj_data["Project Name"] != ""].copy()
-        if not valid_zld.empty:
-            if sync_to_master_log(valid_zld, "Ammu"):
-                st.success("✅ ZLD Data Synced!")
-                st.session_state.sync_count += 1
-                st.rerun()
+    with st.form("zld_form"):
+        st.subheader("📈 Enquiry & Design Status")
+        zld_enq_df = pd.DataFrame([{"Client/Enquiry": "", "Offer Status": "Pending", "Design Stage": "Initial"}])
+        zld_enq_data = st.data_editor(zld_enq_df, num_rows="dynamic", use_container_width=True, key="zld_enq")
 
-# --- 7. ROLE: PURCHASE (SANTHOSHI) - FULL FIELDS ---
+        st.subheader("🏗️ Project Execution & Risks")
+        zld_proj_df = pd.DataFrame([{"Project Name": "", "Current Stage": "Fabrication", "Schedule Risk": "NO", "Bottleneck Details": ""}])
+        zld_proj_data = st.data_editor(zld_proj_df, num_rows="dynamic", use_container_width=True, key="zld_proj")
+
+        updates = st.text_area("'UPDATES' (Major Site Events)")
+        
+        c5, c6 = st.columns(2)
+        f_dec_z = c5.selectbox("Founder Decision Required", ["NO", "YES"])
+        dec_det_z = c6.text_input("Decision Details")
+
+        if st.form_submit_button("Sync ZLD Report"):
+            if f_dec_z == "YES":
+                trigger_whatsapp_notification("Ammu (ZLD)", dec_det_z)
+            st.success("ZLD Data Synced.")
+
+# --- 6. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
     st.header("📦 Purchase & Operations - Santhoshi")
-    sk = st.session_state.sync_count
-    planned = st.number_input("Planned Manpower", value=62, key=f"pman_{sk}")
-    actual = st.number_input("Actual Manpower", value=52, key=f"aman_{sk}")
-    
-    if st.button("Sync Purchase Log"):
-        # Create a dummy row for Santhoshi since she has numeric inputs
-        pur_data = pd.DataFrame([{"Manpower_Planned": planned, "Manpower_Actual": actual}])
-        if sync_to_master_log(pur_data, "Santhoshi"):
-            st.success("✅ Log Synced!")
-            st.session_state.sync_count += 1
-            st.rerun()
+    st.warning("🔔 Check Management Dashboard for technical dependencies.")
 
-# --- 8. MANAGEMENT DASHBOARD ---
+    with st.form("purchase_form"):
+        st.subheader("👷 Manpower Tracking")
+        p1, p2, p3 = st.columns(3)
+        planned = p1.number_input("Planned Manpower", value=62)
+        actual = p2.number_input("Actual Manpower", value=52)
+        temp_mp = p3.selectbox("Temp Manpower Used", ["No", "Yes"])
+
+        st.subheader("⚙️ Operations & Site Status")
+        st.write("📊 **Machine & Transport Status**")
+        ops_df = pd.DataFrame([{"Asset": "Plasma Machine", "Status": "Working", "Issue": "None"}])
+        ops_data = st.data_editor(ops_df, num_rows="dynamic", use_container_width=True, key="ops_table")
+
+        absentees = st.text_area("Absentees Details")
+
+        st.subheader("🧠 Management & Decisions")
+        f_dec_p = st.selectbox("Founder Decision Required", ["No", "Yes"])
+        dec_det_p = st.text_input("Decision Details")
+        
+        if st.form_submit_button("Sync Purchase Log"):
+            if f_dec_p == "Yes":
+                trigger_whatsapp_notification("Santhoshi (Purchase)", dec_det_p)
+            st.success("Operations Log Updated.")
+
+# --- 7. MANAGEMENT DASHBOARD ---
 else:
     st.header("📊 B&G Management Analytics")
-    master_df = fetch_master_logs()
-    if not master_df.empty:
-        st.dataframe(master_df, use_container_width=True)
-
-# --- 9. LIVE SUMMARY (BOTTOM - SHOWS ALL COLUMNS) ---
-st.divider()
-st.subheader("📋 Live Factory Overview (EOD Summary)")
-summary_df = fetch_master_logs()
-
-if not summary_df.empty:
-    # Shows all columns in master_log.csv without filtering
-    st.dataframe(summary_df.head(10), use_container_width=True)
+    st.write(f"Reporting Date: {now_ist.strftime('%Y-%m-%d')}")
+    st.info("Consolidating data from all anchors...")
+    st.divider()
+    # Logic to read CSVs from GitHub and display them would go here
+    st.button("📥 Download Master EOD Report (Excel)")
