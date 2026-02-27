@@ -1,4 +1,5 @@
-Project_Name,Stage,Target_Date,Risk,Offers_Today,New_Enq_Today,Client_Calls,Designs_In_Review,Clarifications_Pending,Updates,Decision_Req,Decision_Details,Entry_Date,Timestamp,Designs_Under_Review,Daily_Updates,Founder_Decision
-Maithri Drugs- 12.5SQM ATFD Repair Job,Fabrication,2026-03-06,yes,0,1,1,0.0,0,Visited rudraram site regarding pending ways automation activities,NO,,2026-02-27,15:42,,,
-JI TECH,TRIAL RUNS,2026-02-27,No,1,2,3,2.0,1,MMSN 150 KLD VAC PUMP,NO,SENT TO SERVICE,2026-02-27,14:13,,,
-JI TECH,HANDING OVER,2026-03-06,No,1,1,4,,2,,,,2026-02-27,13:56,2.0,JI tech trial runs going on,NO
+Project_Name,Offers_Today,New_Enq_Today,Client_Calls,Designs_In_Review,Clarifications_Pending,Updates,Decision_Req,Decision_Details,Entry_Date,Timestamp,Stage,Target_Date,Risk,Designs_Under_Review,Daily_Updates,Founder_Decision
+General Site Update,0,0,0,0.0,0,Visited oncology site yesterday-planning to start trails in next week (1st week of march),NO,,2026-02-27,15:46,,,,,,
+Maithri Drugs- 12.5SQM ATFD Repair Job,0,1,1,0.0,0,Visited rudraram site regarding pending ways automation activities,NO,,2026-02-27,15:42,Fabrication,2026-03-06,yes,,,
+JI TECH,1,2,3,2.0,1,MMSN 150 KLD VAC PUMP,NO,SENT TO SERVICE,2026-02-27,14:13,TRIAL RUNS,2026-02-27,No,,,
+JI TECH,1,1,4,,2,,,,2026-02-27,13:56,HANDING OVER,2026-03-06,No,2.0,JI tech trial runs going on,NO
