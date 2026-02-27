@@ -15,79 +15,70 @@ role = st.sidebar.radio("Select Anchor Role:",
 
 st.divider()
 
-# --- 1. KISHORE (API) - 23 COLUMN STRUCTURE (FREEZED) ---
+# --- 1. KISHORE (API) - REFINED FOR MULTIPLE ROWS ---
 if role == "API (Kishore)":
     st.header("API Site Entry - Kishore Anchor")
     
-    # Instant Trigger for Purchase Integration
+    # Critical Purchase Dependency
     st.subheader("Operational & Purchase Integration")
-    has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True, key="api_dep")
+    has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
     if has_dependency == "YES":
-        crit_dep = st.text_area("🔴 List: Project Name vs Requirement", placeholder="e.g. MSN Maithri: 8mm 316 Plate")
+        st.info("💡 Enter multiple requirements below (e.g., Project vs Plate/Pipe specs)")
+        # Use data_editor for multiple rows of dependencies
+        dep_df = pd.DataFrame([{"Project Name": "", "Requirement": ""}])
+        edited_dep = st.data_editor(dep_df, num_rows="dynamic", use_container_width=True, key="api_dep_table")
 
     with st.form("api_form"):
-        st.subheader("Sales & Enquiry Tracking")
-        c1, c2, c3 = st.columns(3)
-        new_enq = c1.text_input("New Enquiries")
-        off_iss = c2.number_input("Offers Issued (Nos)", min_value=0, step=1)
-        off_rev = c3.text_input("Offers Under Review / Status")
+        st.subheader("Enquiry & Design Tracking")
+        st.write("📝 **List New Enquiries & Design Status**")
+        # Multiple rows for enquiries
+        enq_df = pd.DataFrame([{"Enquiry/Client": "", "Offers Issued": 0, "Status": "Review", "Dwg Released": 0}])
+        api_enq_data = st.data_editor(enq_df, num_rows="dynamic", use_container_width=True, key="api_enq_table")
         
-        c4, c5, c6 = st.columns(3)
-        off_7d = c4.number_input("Offers > 7 Days (Nos)", min_value=0, step=1)
-        dwg_rel = c5.number_input("Drawings Released", min_value=0)
-        des_rev = c6.text_input("Designs Under Review")
-
         st.subheader("Technical & Manufacturing Progress")
-        eng_clar = st.text_area("Engineering Clarifications Pending")
-        clar_age = st.text_area("Clarification Ageing (Days)")
-        mfg_plan = st.text_area("Manufacturing Planned vs Actual")
+        c1, c2 = st.columns(2)
+        eng_clar = c1.text_area("Engineering Clarifications Pending")
+        mfg_plan = c2.text_area("Manufacturing Planned vs Actual")
 
-        st.subheader("Deviations & NCR")
-        c10, c11, c12 = st.columns(3)
-        dev_cat = c10.selectbox("Deviation Category", ["N.A", "Manpower", "Design", "Material"])
-        dev_imp = c11.selectbox("Deviation Impact if Continues", ["NO", "YES"])
-        ncr_open = st.text_input("NCR Open (Details)")
+        st.subheader("Deviations & Management")
+        c3, c4, c5 = st.columns(3)
+        dev_cat = c3.selectbox("Deviation Category", ["N.A", "Manpower", "Design", "Material"])
+        ncr_open = c4.text_input("NCR Open (Details)")
+        f_dec = c5.selectbox("Founder Decision Required", ["NO", "YES"])
         
-        c13, c14 = st.columns(2)
-        ncr_imp = c13.selectbox("NCR Impact on Delivery", ["NO", "YES"])
-        calls = c14.number_input("Client Calls Today", min_value=0)
-
-        st.subheader("Management & Decisions")
-        key_disc = st.text_input("Key Client Discussions")
-        top_dev = st.text_input("Top Deviations")
-        f_dec = st.selectbox("Founder Decision Required", ["NO", "YES"])
         dec_det = st.text_input("Decision Details / Context")
 
         if st.form_submit_button("Sync API Report"):
             st.success("Kishore's API Data recorded.")
 
-# --- 2. AMMU (ZLD) - 18 COLUMN STRUCTURE (FREEZED) ---
+# --- 2. AMMU (ZLD) - REFINED FOR MULTIPLE PROJECTS ---
 elif role == "ZLD (Ammu)":
     st.header("ZLD Site Entry - Ammu Anchor")
     
-    # Instant Trigger for Purchase Integration
+    # Purchase Integration
     st.subheader("Purchase Integration")
-    has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True, key="zld_dep")
+    has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
     if has_dep_zld == "YES":
-        crit_dep_zld = st.text_area("🔴 List: Project Name vs Requirement", placeholder="e.g. MSN Oncology: Centrifugal Pump PO")
+        dep_zld_df = pd.DataFrame([{"Project": "", "Component/PO Required": ""}])
+        edited_zld_dep = st.data_editor(dep_zld_df, num_rows="dynamic", use_container_width=True, key="zld_dep_table")
 
     with st.form("zld_form"):
         st.subheader("Enquiry & Design Status")
-        z1, z2, z3 = st.columns(3)
-        new_enq_z = z1.text_input("New Enquiries")
-        off_iss_z = z2.text_input("Offers Issued")
-        off_rev_z = z3.text_input("Offers Under Review")
+        st.write("📝 **Current Enquiries & Design Load**")
+        # Allows multiple enquiries to be entered
+        zld_enq_df = pd.DataFrame([{"Client/Enquiry": "", "Offer Status": "Pending", "Design Stage": "Initial"}])
+        zld_enq_data = st.data_editor(zld_enq_df, num_rows="dynamic", use_container_width=True, key="zld_enq_table")
 
-        z4, z5, z6 = st.columns(3)
-        off_15d = z4.text_input("Offers > 15 Days")
-        des_comp = z5.text_input("Designs Completed")
-        des_rev_z = z6.text_input("Designs Under Review")
-
-        st.subheader("Project Execution")
-        z7, z8, z9 = st.columns(3)
-        active_proj = z7.selectbox("Active Project", ["150 KLD MEE-MSN", "30KL OIL SYSTEM", "20KLD MEE-MSN", "Other"])
-        stage = z8.text_input("Project Stage")
-        sch_risk = z9.selectbox("Schedule Risk", ["NO", "YES"])
+        st.subheader("Project Execution & Schedule Risks")
+        st.write("🏗️ **Active Projects Tracking**")
+        # Allows entering multiple projects with their specific stages and risks
+        zld_proj_df = pd.DataFrame([{
+            "Project Name": "150 KLD MEE-MSN", 
+            "Current Stage": "Fabrication", 
+            "Schedule Risk": "NO",
+            "Risk/Bottleneck Details": ""
+        }])
+        zld_proj_data = st.data_editor(zld_proj_df, num_rows="dynamic", use_container_width=True, key="zld_proj_table")
 
         updates = st.text_area("'UPDATES' (Major Site Events)")
         
@@ -98,32 +89,18 @@ elif role == "ZLD (Ammu)":
         if st.form_submit_button("Sync ZLD Report"):
             st.success("Ammu's ZLD Report successfully synced.")
 
-# --- 3. SANTHOSHI (PURCHASE) - 14 COLUMN STRUCTURE (FREEZED) ---
+# --- 3. PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
     st.header("Purchase & Operations Entry - Santhoshi")
-    st.info("Dependencies flagged by Technical Anchors will appear in the Management Dashboard.")
-
     with st.form("purchase_form"):
-        st.subheader("Manpower Tracking")
-        p1, p2, p3 = st.columns(3)
+        p1, p2 = st.columns(2)
         planned = p1.number_input("Planned Manpower", value=62)
         actual = p2.number_input("Actual Manpower", value=52)
-        temp_mp = p3.selectbox("Temp Manpower Used", ["No", "Yes"])
-
-        st.subheader("Operations & Site Status")
-        p4, p5, p6 = st.columns(3)
+        
+        st.subheader("Operations Status")
+        p4, p5 = st.columns(2)
         crit_machines = p4.text_input("Critical Machines Status")
         downtime = p5.text_input("Breakdown / Downtime")
-        transp = p6.text_input("Transportation Status")
-
-        p7, p8, p9 = st.columns(3)
-        prod_supp = p7.selectbox("Production Supported", ["Yes", "No"])
-        site_imp = p8.selectbox("Site Impacted", ["No", "Yes"])
-        absentees = p9.text_area("Absentees Details")
-
-        st.subheader("Management & Decisions")
-        f_dec_p = st.selectbox("Founder Decision Required", ["No", "Yes"])
-        dec_det_p = st.text_input("Decision Details")
         
         if st.form_submit_button("Sync Purchase Log"):
             st.success("Santhoshi's Operations Log Updated.")
@@ -131,5 +108,6 @@ elif role == "Purchase (Santhoshi)":
 # --- 4. MANAGEMENT DASHBOARD ---
 else:
     st.header("B&G Management Analytics")
-    st.write("Full EOD report summary across all departments.")
-    st.download_button("📥 Export Master Excel Report", "Date,Anchor,Project,Critical_Dependency\n2026-02-27,API,10KL,Pumps", "bg_master.csv")
+    st.info("Consolidated View of ZLD Projects and API Deviations.")
+    # Here we would eventually load the CSVs and show the combined tables
+    st.write("Awaiting data sync from anchors...")
