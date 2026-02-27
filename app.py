@@ -166,7 +166,7 @@ elif role == "Purchase (Santhoshi)":
     actual = p2.number_input("Actual Manpower", value=52, key=f"a_man_{sk}")
     temp_mp = p3.selectbox("Temp Manpower Used?", ["No", "Yes"], key=f"temp_{sk}")
 
-    # 2. CRITICAL MACHINERY RUNNING STATUS (UPDATED WITH IMPACT & RISKS)
+    # 2. CRITICAL MACHINERY RUNNING STATUS
     st.subheader("⚙️ 2. Critical Machinery Running Status")
     ops_df = pd.DataFrame([
         {"Asset": "Plasma Machine", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"},
@@ -180,15 +180,9 @@ elif role == "Purchase (Santhoshi)":
         use_container_width=True, 
         key=f"ops_edit_{sk}",
         column_config={
-            "Status": st.column_config.SelectboxColumn(
-                "Status", options=["Working", "Breakdown", "Under Maintenance"]
-            ),
-            "Production_Impacted": st.column_config.SelectboxColumn(
-                "Production Impacted?", options=["No", "Yes", "Partial"]
-            ),
-            "Risks_Next_2_3_Days": st.column_config.SelectboxColumn(
-                "Risk Level", options=["Low", "Medium", "High"]
-            )
+            "Status": st.column_config.SelectboxColumn("Status", options=["Working", "Breakdown", "Under Maintenance"]),
+            "Production_Impacted": st.column_config.SelectboxColumn("Production Impacted?", options=["No", "Yes", "Partial"]),
+            "Risks_Next_2_3_Days": st.column_config.SelectboxColumn("Risk Level", options=["Low", "Medium", "High"])
         }
     )
 
@@ -201,7 +195,6 @@ elif role == "Purchase (Santhoshi)":
         dec_det_p = st.text_area("Decision Details (if Yes)")
 
         if st.form_submit_button("🚀 Sync Purchase Report"):
-            # Prepare the final dataframe for the CSV
             valid_pur = ops_data.copy()
             valid_pur["Planned_MP"] = planned
             valid_pur["Actual_MP"] = actual
@@ -216,21 +209,37 @@ elif role == "Purchase (Santhoshi)":
                 st.session_state.sync_count += 1
                 st.rerun()
 
-    # 4. PURCHASE SUMMARY TABLE
+    # --- 4. SUBHEADING WISE SUMMARY TABLES ---
     st.divider()
-    st.subheader("📋 Your Recent Purchase Logs")
+    st.subheader("📋 Purchase Submission Summary")
     pur_history = fetch_logs("purchase_report.csv")
+    
     if not pur_history.empty:
-        st.dataframe(pur_history, use_container_width=True)
+        # Create Subheading Tabs
+        p_tab1, p_tab2, p_tab3 = st.tabs(["👷 Manpower Logs", "⚙️ Machinery Status", "🧠 Management Decisions"])
         
+        with p_tab1:
+            # Show Manpower related columns only
+            manpower_cols = ["Entry_Date", "Timestamp", "Planned_MP", "Actual_MP", "Temp_Used", "Absentees"]
+            st.dataframe(pur_history[manpower_cols], use_container_width=True)
+            
+        with p_tab2:
+            # Show Machinery status related columns
+            machinery_cols = ["Entry_Date", "Asset", "Status", "Production_Impacted", "Risks_Next_2_3_Days", "Issue"]
+            st.dataframe(pur_history[machinery_cols], use_container_width=True)
+            
+        with p_tab3:
+            # Show Decision and Operations updates
+            decision_cols = ["Entry_Date", "Operations_Updates", "Founder_Decision", "Decision_Context"]
+            st.dataframe(pur_history[decision_cols], use_container_width=True)
+
         # ANCHOR EXCEL DOWNLOAD
         p_buffer = io.BytesIO()
         with pd.ExcelWriter(p_buffer, engine='xlsxwriter') as writer:
-            pur_history.to_excel(writer, sheet_name='Purchase_Ops', index=False)
+            pur_history.to_excel(writer, sheet_name='Purchase_Full_Log', index=False)
         
         st.download_button(label="📥 Download My Purchase Log (Excel)", data=p_buffer.getvalue(),
                            file_name=f"Santhoshi_Purchase_Log_{date.today()}.xlsx", mime="application/vnd.ms-excel")
-
 # --- 8. FOUNDER DASHBOARD ---
 else:
     st.header("📊 Founder Master Overview")
