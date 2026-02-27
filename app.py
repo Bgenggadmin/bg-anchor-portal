@@ -239,21 +239,32 @@ elif role == "ZLD (Ammu)":
     
     with z_tabs[0]:
         st.dataframe(z_pur_h, use_container_width=True)
+
     with z_tabs[1]:
         st.write("#### Detailed Feedback")
         st.dataframe(z_sales_h, use_container_width=True)
         st.write("#### Daily Metrics Summary")
         if not z_report_h.empty:
-            metrics_cols = ["Entry_Date", "Offers_Today", "New_Enq_Today", "Client_Calls", "Designs_In_Review", "Clarifications_Pending"]
-            st.dataframe(z_report_h[metrics_cols].drop_duplicates(), use_container_width=True)
+            # FIX: Only select columns that exist in the dataframe to prevent KeyError
+            available_metrics = [col for col in ["Entry_Date", "Offers_Today", "New_Enq_Today", "Client_Calls", "Designs_Review", "Clarifications_Pending"] if col in z_report_h.columns]
+            if available_metrics:
+                st.dataframe(z_report_h[available_metrics].drop_duplicates(), use_container_width=True)
+            else:
+                st.info("No sales metrics found in history.")
+
     with z_tabs[2]:
         if not z_report_h.empty:
-            project_cols = ["Entry_Date", "Project_Name", "Stage", "Target_Date", "Risk"]
-            st.dataframe(z_report_h[z_report_h["Project_Name"] != "General Site Update"][project_cols], use_container_width=True)
+            # FIX: Safe column selection for Projects
+            available_projects = [col for col in ["Entry_Date", "Project_Name", "Stage", "Target_Date", "Risk"] if col in z_report_h.columns]
+            if available_projects:
+                st.dataframe(z_report_h[z_report_h["Project_Name"] != "General Update"][available_projects], use_container_width=True)
+
     with z_tabs[3]:
         if not z_report_h.empty:
-            mgmt_cols = ["Entry_Date", "Updates", "Decision_Req", "Decision_Details"]
-            st.dataframe(z_report_h[mgmt_cols].drop_duplicates(), use_container_width=True)
+            # FIX: Safe column selection for Management
+            available_mgmt = [col for col in ["Entry_Date", "Updates", "Decision_Req", "Decision_Details"] if col in z_report_h.columns]
+            if available_mgmt:
+                st.dataframe(z_report_h[available_mgmt].drop_duplicates(), use_container_width=True)
 
 # --- 7. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
