@@ -41,29 +41,32 @@ def fetch_logs(filename):
     except:
         return pd.DataFrame()
 
-# --- 4. SMART GATEWAY & PASSWORD PROTECTION ---
+# --- 4. SMART GATEWAY & ROLE FILTERING ---
 st.sidebar.title("🏢 B&G Engineering")
 
-# INTERNAL PASSWORD GATE (Matches your Production/Quality Apps)
+# 1. Password Protection
 portal_password = st.sidebar.text_input("Enter Portal Password:", type="password")
 
-if portal_password != "7890": # <--- CHANGE THIS to your actual portal password
-    st.warning("🔒 Please enter the correct password to access the reporting portal.")
-    st.stop() 
+if portal_password != "7890": # Use your actual PIN here
+    st.warning("🔒 Please enter the correct password.")
+    st.stop()
 
-# ROLE ROUTING LOGIC (Reads the WhatsApp Link)
+# 2. Smart Role Filtering (Based on the WhatsApp Link)
 query_params = st.query_params
-url_role = query_params.get("role", "API")
+url_role = query_params.get("role", "Full") # Default to Full if no role in link
 
-# Map the URL word to the Sidebar position
-role_map = {"API": 0, "ZLD": 1, "Purchase": 2, "Founder": 3}
-default_idx = role_map.get(url_role, 0)
+# Define what each person is allowed to see
+if url_role == "API":
+    role_options = ["API (Kishore)"]
+elif url_role == "ZLD":
+    role_options = ["ZLD (Ammu)"]
+elif url_role == "Purchase":
+    role_options = ["Purchase (Santhoshi)"]
+else:
+    # This is YOUR view (The Founder)
+    role_options = ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Founder Dashboard"]
 
-role = st.sidebar.radio(
-    "Select Anchor Role:",
-    ["API (Kishore)", "ZLD (Ammu)", "Purchase (Santhoshi)", "Founder Dashboard"],
-    index=default_idx
-)
+role = st.sidebar.radio("Your Assigned Role:", role_options)
 
 # --- 5. ROLE: API (KISHORE) ---
 if role == "API (Kishore)":
