@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 import pytz
 from github import Github
 import io
@@ -49,10 +49,24 @@ sk = st.session_state.sync_count
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
 
-    # 1. Purchase Dependencies
+    # 1. Purchase Dependencies - UPDATED WITH DATE SELECTOR
     st.subheader("🔴 Critical Purchase Dependencies")
-    api_pur = st.data_editor(pd.DataFrame([{"Job": "", "Material": "", "Req_Date": "", "Urgency": "High"}]), 
-                             num_rows="dynamic", use_container_width=True, key=f"pur_{sk}")
+    # We initialize with a date object so the editor knows it's a calendar field
+    init_pur_df = pd.DataFrame([{"Job": "", "Material": "", "Req_Date": date.today(), "Urgency": "High"}])
+    
+    api_pur = st.data_editor(
+        init_pur_df, 
+        num_rows="dynamic", 
+        use_container_width=True, 
+        key=f"pur_{sk}",
+        column_config={
+            "Req_Date": st.column_config.DateColumn(
+                "Required Date",
+                format="YYYY-MM-DD",
+                step=1,
+            )
+        }
+    )
 
     # 2. Sales & Enquiry
     st.subheader("📊 Sales & Enquiry Tracking")
@@ -62,12 +76,12 @@ if role == "API (Kishore)":
     # 3. Technical & Manufacturing
     st.subheader("🛠️ Technical & Manufacturing Progress")
     api_mfg = st.data_editor(pd.DataFrame([{"Job Code": "", "Planned": "", "Actual": "", "Delay_Reason": ""}]), 
-                             num_rows="dynamic", use_container_width=True, key=f"mfg_{sk}")
+                               num_rows="dynamic", use_container_width=True, key=f"mfg_{sk}")
 
     # 4. Deviations & NCR
     st.subheader("⚠️ Deviations & Quality (NCR)")
     api_ncr = st.data_editor(pd.DataFrame([{"Category": "Material", "Detail": "", "Impact": "NO"}]), 
-                             num_rows="dynamic", use_container_width=True, key=f"ncr_{sk}")
+                               num_rows="dynamic", use_container_width=True, key=f"ncr_{sk}")
 
     # 5. Management Decisions
     st.subheader("🧠 Management Decisions")
