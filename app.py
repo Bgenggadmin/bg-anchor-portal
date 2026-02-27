@@ -166,19 +166,31 @@ elif role == "Purchase (Santhoshi)":
     actual = p2.number_input("Actual Manpower", value=52, key=f"a_man_{sk}")
     temp_mp = p3.selectbox("Temp Manpower Used?", ["No", "Yes"], key=f"temp_{sk}")
 
-    # 2. CRITICAL MACHINERY RUNNING STATUS
-    st.subheader("⚙️ 2. Crtical Machinery Running Status")
+    # 2. CRITICAL MACHINERY RUNNING STATUS (UPDATED WITH IMPACT & RISKS)
+    st.subheader("⚙️ 2. Critical Machinery Running Status")
     ops_df = pd.DataFrame([
-        {"Asset": "Plasma Machine", "Status": "Working", "Issue": "None"},
-        {"Asset": "EOT Crane", "Status": "Working", "Issue": "None"},
-        {"Asset": "Site Vehicle", "Status": "Working", "Issue": "None"}
+        {"Asset": "Plasma Machine", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"},
+        {"Asset": "EOT Crane", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"},
+        {"Asset": "Site Vehicle", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"}
     ])
-    ops_data = st.data_editor(ops_df, num_rows="dynamic", use_container_width=True, key=f"ops_edit_{sk}",
-                              column_config={
-                                  "Status": st.column_config.SelectboxColumn(
-                                      "Status", options=["Working", "Breakdown", "Under Maintenance"]
-                                  )
-                              })
+    
+    ops_data = st.data_editor(
+        ops_df, 
+        num_rows="dynamic", 
+        use_container_width=True, 
+        key=f"ops_edit_{sk}",
+        column_config={
+            "Status": st.column_config.SelectboxColumn(
+                "Status", options=["Working", "Breakdown", "Under Maintenance"]
+            ),
+            "Production_Impacted": st.column_config.SelectboxColumn(
+                "Production Impacted?", options=["No", "Yes", "Partial"]
+            ),
+            "Risks_Next_2_3_Days": st.column_config.SelectboxColumn(
+                "Risk Level", options=["Low", "Medium", "High"]
+            )
+        }
+    )
 
     # 3. SITE REMARKS & DECISIONS
     st.subheader("🧠 3. Operations & Management")
@@ -218,7 +230,7 @@ elif role == "Purchase (Santhoshi)":
         
         st.download_button(label="📥 Download My Purchase Log (Excel)", data=p_buffer.getvalue(),
                            file_name=f"Santhoshi_Purchase_Log_{date.today()}.xlsx", mime="application/vnd.ms-excel")
-# --- 8. FOUNDER DASHBOARD ---
+
 # --- 8. FOUNDER DASHBOARD ---
 else:
     st.header("📊 Founder Master Overview")
