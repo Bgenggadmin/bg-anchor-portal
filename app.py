@@ -18,6 +18,18 @@ st.divider()
 # --- 1. KISHORE (API) ---
 if role == "API (Kishore)":
     st.header("API Site Entry - Kishore Anchor")
+    
+    st.subheader("Operational & Purchase Integration")
+    # MOVE TRIGGER OUTSIDE THE FORM TO FORCE REFRESH
+    has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True, key="api_dep")
+    
+    # Conditional text area appears immediately
+    crit_dep_value = ""
+    if has_dependency == "YES":
+        crit_dep_value = st.text_area("🔴 List: Project Name vs Requirement", 
+            placeholder="e.g.\nMSN Maithri: 8mm 316 Plate\n30KL Oil System: 5HP Motor", height=150)
+
+    # All other fields stay inside the form
     with st.form("api_form"):
         st.subheader("Sales & Technical Tracking")
         c1, c2 = st.columns(2)
@@ -28,15 +40,6 @@ if role == "API (Kishore)":
         clar_age = st.text_area("Clarification Ageing (Days)")
         mfg_plan = st.text_area("Manufacturing Planned vs Actual")
 
-        st.subheader("Operational & Purchase Integration")
-        # CONDITIONAL TRIGGER
-        has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
-        
-        if has_dependency == "YES":
-            # Direct text entry for Project vs Requirement
-            crit_dep = st.text_area("🔴 List: Project Name vs Requirement", 
-                placeholder="e.g.\nMSN Maithri: 8mm 316 Plate\n30KL Oil System: 5HP Motor")
-        
         st.subheader("Management & Decisions")
         f_dec = st.selectbox("Founder Decision Required", ["NO", "YES"])
         dec_det = st.text_input("Decision Details / Context")
@@ -47,17 +50,19 @@ if role == "API (Kishore)":
 # --- 2. AMMU (ZLD) ---
 elif role == "ZLD (Ammu)":
     st.header("ZLD Site Entry - Ammu Anchor")
+    
+    # MOVE TRIGGER OUTSIDE THE FORM
+    has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True, key="zld_dep")
+    
+    crit_dep_zld_val = ""
+    if has_dep_zld == "YES":
+        crit_dep_zld_val = st.text_area("🔴 List: Project Name vs Requirement", 
+            placeholder="e.g. MSN Oncology: Centrifugal Pump PO")
+
     with st.form("zld_form"):
         st.subheader("Project Execution")
         stage = st.text_input("Project Stage (e.g. Commissioning)")
         updates = st.text_area("'UPDATES' (Major Site Events)")
-        
-        # CONDITIONAL TRIGGER
-        has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
-        
-        if has_dep_zld == "YES":
-            crit_dep_zld = st.text_area("🔴 List: Project Name vs Requirement", 
-                placeholder="e.g. MSN Oncology: Centrifugal Pump PO")
         
         if st.form_submit_button("Sync ZLD Report"):
             st.success("ZLD Report successfully synced.")
@@ -65,7 +70,6 @@ elif role == "ZLD (Ammu)":
 # --- 3. SANTHOSHI (PURCHASE) ---
 elif role == "Purchase (Santhoshi)":
     st.header("Purchase & Operations Control")
-    
     st.subheader("⚠️ High-Priority Site Dependencies")
     st.info("If Kishore or Ammu flagged 'YES', their Project vs Requirement list will appear here.")
     
