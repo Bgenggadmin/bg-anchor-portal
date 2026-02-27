@@ -219,14 +219,56 @@ elif role == "Purchase (Santhoshi)":
         st.download_button(label="📥 Download My Purchase Log (Excel)", data=p_buffer.getvalue(),
                            file_name=f"Santhoshi_Purchase_Log_{date.today()}.xlsx", mime="application/vnd.ms-excel")
 # --- 8. FOUNDER DASHBOARD ---
+# --- 8. FOUNDER DASHBOARD ---
 else:
     st.header("📊 Founder Master Overview")
-    # Excel Download Logic (combining all files)
+    
+    # 1. FETCH ALL DATA STREAMS
+    # We pull from the clean, isolated files in your repository
+    api_p = fetch_logs("api_purchase.csv")
+    api_m = fetch_logs("api_manufacturing.csv")
+    api_s = fetch_logs("api_sales.csv")
+    api_d = fetch_logs("api_drawings.csv")
+    api_n = fetch_logs("api_ncr.csv")
+    api_mg = fetch_logs("api_management.csv")
+    
+    zld_r = fetch_logs("zld_report.csv")
+    pur_r = fetch_logs("purchase_report.csv")
+
+    # 2. MASTER EXCEL DOWNLOAD (Multi-Sheet)
+    st.subheader("📥 Export Master Data")
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        fetch_logs("api_purchase.csv").to_excel(writer, sheet_name='API_Pur', index=False)
-        fetch_logs("zld_report.csv").to_excel(writer, sheet_name='ZLD_Report', index=False)
-        fetch_logs("purchase_report.csv").to_excel(writer, sheet_name='Purchase_Ops', index=False)
+        if not api_p.empty: api_p.to_excel(writer, sheet_name='API_Purchase', index=False)
+        if not api_m.empty: api_m.to_excel(writer, sheet_name='API_Manufacturing', index=False)
+        if not zld_r.empty: zld_r.to_excel(writer, sheet_name='ZLD_Report', index=False)
+        if not pur_r.empty: pur_r.to_excel(writer, sheet_name='Purchase_Ops', index=False)
     
-    st.download_button(label="📥 Download Master Excel Report", data=buffer.getvalue(),
-                       file_name=f"BG_Master_{date.today()}.xlsx", mime="application/vnd.ms-excel")
+    st.download_button(
+        label="📥 Download Master Excel Report",
+        data=buffer.getvalue(),
+        file_name=f"BG_Master_Report_{date.today()}.xlsx",
+        mime="application/vnd.ms-excel"
+    )
+
+    st.divider()
+
+    # 3. LIVE DATA TABS (For Quick Review)
+    st.subheader("📋 Live Site Feeds")
+    t1, t2, t3 = st.tabs(["🏗️ API (Kishore)", "💧 ZLD (Ammu)", "📦 Purchase (Santhoshi)"])
+    
+    with t1:
+        st.write("### Technical & Progress Logs")
+        st.dataframe(api_m, use_container_width=True)
+        st.write("### Purchase Dependencies")
+        st.dataframe(api_p, use_container_width=True)
+        st.write("### Management Decisions Requested")
+        st.dataframe(api_mg, use_container_width=True)
+
+    with t2:
+        st.write("### ZLD Project Status")
+        st.dataframe(zld_r, use_container_width=True)
+
+    with t3:
+        st.write("### Manpower & Asset Status")
+        st.dataframe(pur_r, use_container_width=True)
