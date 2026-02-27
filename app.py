@@ -144,11 +144,12 @@ if role == "API (Kishore)":
         )
 
 # --- 6. ROLE: ZLD (AMMU) ---
+# --- 6. ROLE: ZLD (AMMU) ---
 elif role == "ZLD (Ammu)":
     st.header("💧 ZLD Site Entry - Ammu Anchor")
     sk = st.session_state.sync_count 
 
-    # 1. CRITICAL PURCHASE DEPENDENCIES (ZLD SPECIFIC)
+    # 1. CRITICAL PURCHASE DEPENDENCIES
     st.subheader("🔴 1. Critical Purchase Dependencies")
     zld_pur_df = pd.DataFrame([{"Project": "", "Material/Component": "", "Req_Date": date.today(), "Urgency": "High"}])
     zld_pur_data = st.data_editor(
@@ -194,20 +195,28 @@ elif role == "ZLD (Ammu)":
         dec_context_z = st.text_area("Decision Context (if YES)")
 
         if st.form_submit_button("🚀 Sync ZLD Report"):
-            # Sync Purchase Table
-            sync_to_private_file(zld_pur_data[zld_pur_data["Project"] != ""], "zld_purchase.csv")
+            # A. Sync Purchase Table
+            zld_pur_final = zld_pur_data[zld_pur_data["Project"] != ""]
+            if not zld_pur_final.empty:
+                sync_to_private_file(zld_pur_final, "zld_purchase.csv")
             
-            # Sync Sales Feedback Table
-            sync_to_private_file(z_sales_data[z_sales_data["Client"] != ""], "zld_sales_feedback.csv")
+            # B. Sync Sales Feedback Table
+            zld_feedback_final = z_sales_data[z_sales_data["Client"] != ""]
+            if not zld_feedback_final.empty:
+                sync_to_private_file(zld_feedback_final, "zld_sales_feedback.csv")
             
-            # Prepare Project & Management Data
+            # C. Prepare Main Project Report
             valid_zld = zld_proj_data[zld_proj_data["Project_Name"] != ""].copy()
-            if valid_zld.empty: valid_zld = pd.DataFrame([{"Project_Name": "General Update"}])
             
+            # If no specific project updated, create a summary row to capture the numbers/updates
+            if valid_zld.empty:
+                valid_zld = pd.DataFrame([{"Project_Name": "General Site Update"}])
+            
+            # Add all metrics and form data to the dataframe
             valid_zld["Offers_Today"] = offers_sub
             valid_zld["New_Enq_Today"] = new_enq
             valid_zld["Client_Calls"] = client_calls
-            valid_zld["Designs_Review"] = designs_review
+            valid_zld["Designs_In_Review"] = designs_review
             valid_zld["Clarifications_Pending"] = clar_pending
             valid_zld["Updates"] = zld_updates
             valid_zld["Decision_Req"] = f_dec_z
@@ -226,19 +235,26 @@ elif role == "ZLD (Ammu)":
     z_sales_h = fetch_logs("zld_sales_feedback.csv")
     z_report_h = fetch_logs("zld_report.csv")
 
-    z_tabs = st.tabs(["🔴 Purchase", "📈 Sales/Design", "🏗️ Projects", "🧠 Mgmt"])
+    z_tabs = st.tabs(["🔴 Purchase", "📈 Sales & Design", "🏗️ Projects", "🧠 Mgmt"])
     
     with z_tabs[0]:
         st.dataframe(z_pur_h, use_container_width=True)
     with z_tabs[1]:
         st.write("#### Detailed Feedback")
         st.dataframe(z_sales_h, use_container_width=True)
-        st.write("#### Daily Metrics")
-        st.dataframe(z_report_h[["Entry_Date", "Offers_Today", "New_Enq_Today", "Designs_Review"]].drop_duplicates(), use_container_width=True)
+        st.write("#### Daily Metrics Summary")
+        if not z_report_h.empty:
+            metrics_cols = ["Entry_Date", "Offers_Today", "New_Enq_Today", "Client_Calls", "Designs_In_Review", "Clarifications_Pending"]
+            st.dataframe(z_report_h[metrics_cols].drop_duplicates(), use_container_width=True)
     with z_tabs[2]:
-        st.dataframe(z_report_h[["Entry_Date", "Project_Name", "Stage", "Target_Date", "Risk"]], use_container_width=True)
+        if not z_report_h.empty:
+            project_cols = ["Entry_Date", "Project_Name", "Stage", "Target_Date", "Risk"]
+            st.dataframe(z_report_h[z_report_h["Project_Name"] != "General Site Update"][project_cols], use_container_width=True)
     with z_tabs[3]:
-        st.dataframe(z_report_h[["Entry_Date", "Updates", "Decision_Req", "Decision_Details"]].drop_duplicates(), use_container_width=True)
+        if not z_report_h.empty:
+            mgmt_cols = ["Entry_Date", "Updates", "Decision_Req", "Decision_Details"]
+            st.dataframe(z_report_h[mgmt_cols].drop_duplicates(), use_container_width=True)
+
 # --- 7. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
     st.header("📦 Purchase & Operations - Santhoshi")
