@@ -10,7 +10,7 @@ st.set_page_config(page_title="B&G Digital Portal", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 now_ist = datetime.now(IST)
 
-# --- 2. SESSION STATE (FIXES EVERYTHING BREAKING) ---
+# --- 2. SESSION STATE (FIXES CELL RESET & NameError) ---
 if "sync_count" not in st.session_state:
     st.session_state.sync_count = 0
 
@@ -61,10 +61,10 @@ role = st.sidebar.radio("Select Anchor Role:",
 
 st.divider()
 
-# --- 5. ROLE: API (KISHORE) - ALL FIELDS RESTORED & CLEANED ---
+# --- 5. ROLE: API (KISHORE) - ALL FIELDS RESTORED ---
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
-    sk = st.session_state.sync_count # Secret to clearing cells
+    sk = st.session_state.sync_count # Secret key for clearing cells
 
     st.subheader("🔴 Critical Purchase Dependencies")
     api_dep_data = st.data_editor(pd.DataFrame([{"Project/Job": "", "Material Required": "", "Req_Date": "", "PO_Ref": "Pending", "Urgency": "High"}]), num_rows="dynamic", use_container_width=True, key=f"api_dep_{sk}")
@@ -94,39 +94,33 @@ if role == "API (Kishore)":
             if founder_dec == "YES":
                 trigger_whatsapp_alert("Kishore (API)", dec_context)
             
-            # Filter main engineering data only
+            # Combine all Kishore's data for the master log
             valid_eng = api_eng_data[api_eng_data["Job"] != ""].copy()
             if not valid_eng.empty:
                 if sync_to_master_log(valid_eng, "Kishore"):
-                    st.success("✅ Synced! Clearing cells...")
+                    st.success("✅ Synced! Refreshing...")
                     st.session_state.sync_count += 1
                     st.rerun()
 
-# --- 6. ROLE: ZLD (AMMU) ---
-elif role == "ZLD (Ammu)":
-    st.header("💧 ZLD Site Entry - Ammu Anchor")
-    # ... code for ZLD fields ...
-
-# --- 7. MANAGEMENT DASHBOARD ---
+# --- 6. MANAGEMENT DASHBOARD ---
 elif role == "Management Dashboard":
     st.header("📊 B&G Management Analytics")
     master_df = fetch_master_logs()
     if not master_df.empty:
         st.dataframe(master_df, use_container_width=True)
 
-# --- 8. LIVE SUMMARY (BOTTOM - ONLY SHOWS RELEVANT API FIELDS) ---
+# --- 7. LIVE SUMMARY (BOTTOM - FILTERED BY ANCHOR) ---
 st.divider()
 st.subheader("📋 Live Factory Overview (EOD Summary)")
 summary_df = fetch_master_logs()
 
 if not summary_df.empty:
-    # CLEANUP: Only show API-related columns if Kishore is logged in
     if role == "API (Kishore)":
+        # Only show rows from Kishore and only the 5+ API columns
         api_view = summary_df[summary_df["Anchor"] == "Kishore"]
-        # Only show the columns Kishore needs
-        cols_to_show = ["Job", "Clarification", "Ageing", "Priority", "Timestamp"]
-        # Filter only existing columns from that list
-        existing_cols = [c for c in cols_to_show if c in api_view.columns]
+        cols = ["Job", "Clarification", "Ageing", "Priority", "Timestamp"]
+        # Only display columns that actually exist in the data
+        existing_cols = [c for c in cols if c in api_view.columns]
         st.dataframe(api_view[existing_cols].head(10), use_container_width=True)
     else:
         st.dataframe(summary_df.head(10), use_container_width=True)
