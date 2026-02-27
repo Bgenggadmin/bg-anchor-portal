@@ -157,24 +157,67 @@ elif role == "ZLD (Ammu)":
 # --- 7. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
     st.header("📦 Purchase & Operations - Santhoshi")
-    c1, c2 = st.columns(2)
-    p_man = c1.number_input("Planned Manpower", value=62, key=f"p_{sk}")
-    a_man = c2.number_input("Actual Manpower", value=52, key=f"a_{sk}")
-    
-    ops_df = st.data_editor(pd.DataFrame([{"Asset": "Plasma Machine", "Status": "Working"}]), num_rows="dynamic", key=f"ops_{sk}")
-    
-    if st.button("🚀 Sync Purchase Report"):
-        valid_pur = ops_df.copy()
-        valid_pur["Planned"] = p_man
-        valid_pur["Actual"] = a_man
-        if sync_to_private_file(valid_pur, "purchase_report.csv"):
-            st.success("✅ Purchase Log Updated!")
-            st.session_state.sync_count += 1
-            st.rerun()
+    sk = st.session_state.sync_count 
 
+    # 1. MANPOWER TRACKING
+    st.subheader("👷 1. Manpower Tracking")
+    p1, p2, p3 = st.columns(3)
+    planned = p1.number_input("Planned Manpower", value=62, key=f"p_man_{sk}")
+    actual = p2.number_input("Actual Manpower", value=52, key=f"a_man_{sk}")
+    temp_mp = p3.selectbox("Temp Manpower Used?", ["No", "Yes"], key=f"temp_{sk}")
+
+    # 2. MACHINE & TRANSPORT STATUS
+    st.subheader("⚙️ 2. Machine & Transport Status")
+    ops_df = pd.DataFrame([
+        {"Asset": "Plasma Machine", "Status": "Working", "Issue": "None"},
+        {"Asset": "EOT Crane", "Status": "Working", "Issue": "None"},
+        {"Asset": "Site Vehicle", "Status": "Working", "Issue": "None"}
+    ])
+    ops_data = st.data_editor(ops_df, num_rows="dynamic", use_container_width=True, key=f"ops_edit_{sk}",
+                              column_config={
+                                  "Status": st.column_config.SelectboxColumn(
+                                      "Status", options=["Working", "Breakdown", "Under Maintenance"]
+                                  )
+                              })
+
+    # 3. SITE REMARKS & DECISIONS
+    st.subheader("🧠 3. Operations & Management")
+    with st.form(f"pur_form_{sk}"):
+        absentees = st.text_area("Absentees Details / Reasons for Low Manpower")
+        site_events = st.text_area("Major Operations Updates")
+        f_dec_p = st.selectbox("Founder Decision Required?", ["No", "Yes"])
+        dec_det_p = st.text_area("Decision Details (if Yes)")
+
+        if st.form_submit_button("🚀 Sync Purchase Report"):
+            # Prepare the final dataframe for the CSV
+            valid_pur = ops_data.copy()
+            valid_pur["Planned_MP"] = planned
+            valid_pur["Actual_MP"] = actual
+            valid_pur["Temp_Used"] = temp_mp
+            valid_pur["Absentees"] = absentees
+            valid_pur["Operations_Updates"] = site_events
+            valid_pur["Founder_Decision"] = f_dec_p
+            valid_pur["Decision_Context"] = dec_det_p
+
+            if sync_to_private_file(valid_pur, "purchase_report.csv"):
+                st.success("✅ Purchase Log Updated! Data Cleared.")
+                st.session_state.sync_count += 1
+                st.rerun()
+
+    # 4. PURCHASE SUMMARY TABLE
+    st.divider()
     st.subheader("📋 Your Recent Purchase Logs")
-    st.dataframe(fetch_logs("purchase_report.csv"), use_container_width=True)
-
+    pur_history = fetch_logs("purchase_report.csv")
+    if not pur_history.empty:
+        st.dataframe(pur_history, use_container_width=True)
+        
+        # ANCHOR EXCEL DOWNLOAD
+        p_buffer = io.BytesIO()
+        with pd.ExcelWriter(p_buffer, engine='xlsxwriter') as writer:
+            pur_history.to_excel(writer, sheet_name='Purchase_Ops', index=False)
+        
+        st.download_button(label="📥 Download My Purchase Log (Excel)", data=p_buffer.getvalue(),
+                           file_name=f"Santhoshi_Purchase_Log_{date.today()}.xlsx", mime="application/vnd.ms-excel")
 # --- 8. FOUNDER DASHBOARD ---
 else:
     st.header("📊 Founder Master Overview")
