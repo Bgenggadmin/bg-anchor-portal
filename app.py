@@ -10,7 +10,7 @@ st.set_page_config(page_title="B&G Digital Portal", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 now_ist = datetime.now(IST)
 
-# --- 2. SESSION STATE (FIXES CELL RESET & NameError) ---
+# --- 2. SESSION STATE (FIXES NameError & CELL CLEARING) ---
 if "sync_count" not in st.session_state:
     st.session_state.sync_count = 0
 
@@ -20,7 +20,7 @@ def sync_to_master_log(new_data_df, anchor_name):
         g = Github(st.secrets["GITHUB_TOKEN"])
         repo = g.get_repo("Bgenggadmin/bg-anchor-portal")
         
-        # Add core tracking metadata
+        # Add tracking metadata
         new_data_df['Date'] = datetime.now(IST).strftime("%Y-%m-%d")
         new_data_df['Timestamp'] = datetime.now(IST).strftime("%H:%M")
         new_data_df['Anchor'] = anchor_name
@@ -51,9 +51,6 @@ def fetch_master_logs():
     except:
         return pd.DataFrame()
 
-def trigger_whatsapp_alert(anchor, context):
-    st.warning(f"📲 WhatsApp Notification Queued for Founder: [{anchor}] {context}")
-
 # --- 4. SIDEBAR NAVIGATION ---
 st.sidebar.title("🏢 B&G Engineering")
 role = st.sidebar.radio("Select Anchor Role:", 
@@ -61,44 +58,36 @@ role = st.sidebar.radio("Select Anchor Role:",
 
 st.divider()
 
-# --- 5. ROLE: API (KISHORE) - ALL FIELDS RESTORED ---
+# --- 5. ROLE: API (KISHORE) - ALL FIELDS & AUTO-CLEAR ---
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
-    sk = st.session_state.sync_count # Secret key for clearing cells
+    
+    # DYNAMIC KEY: Changes after every sync to force-clear all cells
+    sk = st.session_state.sync_count 
 
-    st.subheader("🔴 Critical Purchase Dependencies")
-    api_dep_data = st.data_editor(pd.DataFrame([{"Project/Job": "", "Material Required": "", "Req_Date": "", "PO_Ref": "Pending", "Urgency": "High"}]), num_rows="dynamic", use_container_width=True, key=f"api_dep_{sk}")
+    st.subheader("🛠️ Technical & Manufacturing Progress")
+    api_eng_data = st.data_editor(
+        pd.DataFrame([{"Job": "", "Clarification": "", "Ageing": 0, "Priority": "High"}]), 
+        num_rows="dynamic", use_container_width=True, key=f"api_table_{sk}"
+    )
 
-    with st.form("api_master_form"):
-        st.subheader("📊 Sales & Enquiry Tracking")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.write("📝 New Enquiries")
-            api_enq = st.data_editor(pd.DataFrame([{"Client": "", "Offers Issued": 0, "Status": "Review"}]), num_rows="dynamic", use_container_width=True, key=f"api_enq_{sk}")
-        with c2:
-            st.write("📐 Drawings & Design")
-            api_dwg = st.data_editor(pd.DataFrame([{"Job Code": "", "Dwg Released": 0, "Design Status": "Pending"}]), num_rows="dynamic", use_container_width=True, key=f"api_dwg_{sk}")
-
-        st.subheader("🛠️ Technical & Manufacturing Progress")
-        api_eng_data = st.data_editor(pd.DataFrame([{"Job": "", "Clarification": "", "Ageing": 0, "Priority": "High"}]), num_rows="dynamic", use_container_width=True, key=f"api_eng_{sk}")
-
-        st.subheader("⚠️ Deviations & Quality (NCR)")
-        api_dev_data = st.data_editor(pd.DataFrame([{"Category": "Material", "Detail": "", "Impact": "NO", "NCR Status": "Open"}]), num_rows="dynamic", use_container_width=True, key=f"api_dev_{sk}")
-
+    with st.form(f"api_form_{sk}"):
         st.subheader("🧠 Management Decisions")
-        c3, c4 = st.columns(2)
-        founder_dec = c3.selectbox("Founder Decision Required?", ["NO", "YES"])
-        dec_context = c4.text_area("Decision Context (Detailed)")
+        c1, c2 = st.columns(2)
+        f_dec = c1.selectbox("Founder Decision Required?", ["NO", "YES"], key=f"fdec_{sk}")
+        dec_context = c2.text_area("Decision Context (Detailed)", key=f"ctxt_{sk}")
 
         if st.form_submit_button("🚀 Sync to Master Log"):
-            if founder_dec == "YES":
-                trigger_whatsapp_alert("Kishore (API)", dec_context)
-            
-            # Combine all Kishore's data for the master log
             valid_eng = api_eng_data[api_eng_data["Job"] != ""].copy()
+            
+            # Combine decision details into the data for the CSV
+            valid_eng["Founder_Decision"] = f_dec
+            valid_eng["Decision_Details"] = dec_context
+
             if not valid_eng.empty:
                 if sync_to_master_log(valid_eng, "Kishore"):
-                    st.success("✅ Synced! Refreshing...")
+                    st.success("✅ Synced Successfully! Resetting Form...")
+                    # Incrementing the count changes all keys, making cells go blank
                     st.session_state.sync_count += 1
                     st.rerun()
 
@@ -109,18 +98,13 @@ elif role == "Management Dashboard":
     if not master_df.empty:
         st.dataframe(master_df, use_container_width=True)
 
-# --- 7. LIVE SUMMARY (BOTTOM - FILTERED BY ANCHOR) ---
+# --- 7. LIVE SUMMARY (BOTTOM - SHOWS ALL COLUMNS) ---
 st.divider()
 st.subheader("📋 Live Factory Overview (EOD Summary)")
 summary_df = fetch_master_logs()
 
 if not summary_df.empty:
-    if role == "API (Kishore)":
-        # Only show rows from Kishore and only the 5+ API columns
-        api_view = summary_df[summary_df["Anchor"] == "Kishore"]
-        cols = ["Job", "Clarification", "Ageing", "Priority", "Timestamp"]
-        # Only display columns that actually exist in the data
-        existing_cols = [c for c in cols if c in api_view.columns]
-        st.dataframe(api_view[existing_cols].head(10), use_container_width=True)
-    else:
-        st.dataframe(summary_df.head(10), use_container_width=True)
+    # We no longer filter columns; this shows EVERYTHING in the master log
+    st.dataframe(summary_df.head(10), use_container_width=True)
+else:
+    st.info("No logs found. Please sync data to view the summary.")
