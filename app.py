@@ -154,56 +154,47 @@ elif role == "Purchase (Santhoshi)":
             st.success("Operations Log Updated.")
 
 # --- 7. MANAGEMENT DASHBOARD (UPDATED) ---
-# --- 7. MANAGEMENT DASHBOARD (UPDATED TO SHOW LOGS) ---
+# --- 1. SESSION STATE FOR FORM RESET ---
+if "form_cleared" not in st.session_state:
+    st.session_state.form_cleared = False
+
+def clear_form():
+    st.session_state.form_cleared = True
+
+# --- 7. MANAGEMENT DASHBOARD (FIXED READER) ---
 else:
     st.header("📊 B&G Management Analytics")
-    st.write(f"**Live Refresh Time:** {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST")
     
-    # Helper Function to read logs from GitHub
-    def fetch_logs(repo_name, file_name):
+    # Reader Engine
+    def load_logs(repo, file):
         try:
             g = Github(st.secrets["GITHUB_TOKEN"])
-            repo = g.get_repo(f"Bgenggadmin/{repo_name}")
-            contents = repo.get_contents(file_name)
-            df = pd.read_csv(io.StringIO(contents.decoded_content.decode()))
-            return df
-        except Exception as e:
-            # If the file is empty or missing, return an empty table
-            return pd.DataFrame()
+            r = g.get_repo(f"Bgenggadmin/{repo}")
+            c = r.get_contents(file)
+            return pd.read_csv(io.StringIO(c.decoded_content.decode()))
+        except:
+            return pd.DataFrame() # Returns empty if file not found
 
-    # Create Tabs for different departments
-    tab_api, tab_zld, tab_pur = st.tabs(["🏗️ API Logs", "💧 ZLD Status", "📦 Purchase/Ops"])
+    # SHOW TABLES
+    st.subheader("🏗️ Recent API Site Logs")
+    api_df = load_logs("bg-api-logs", "engineering_audit.csv")
+    if not api_df.empty:
+        st.dataframe(api_df.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+    else:
+        st.info("No logs found. Ensure Kishore has synced data to 'engineering_audit.csv' on GitHub.")
 
-    with tab_api:
-        st.subheader("Kishore - API Site Audit")
-        api_data = fetch_logs("bg-api-logs", "engineering_audit.csv")
-        if not api_data.empty:
-            # Sort by latest timestamp first
-            st.dataframe(api_data.sort_values(by="Timestamp", ascending=False), use_container_width=True)
-        else:
-            st.info("No logs found for API. Ask Kishore to sync his report.")
+    st.subheader("💧 Recent ZLD Project Status")
+    zld_df = load_logs("bg-zld-logs", "project_execution.csv")
+    if not zld_df.empty:
+        st.dataframe(zld_df.sort_values(by="Timestamp", ascending=False), use_container_width=True)
 
-    with tab_zld:
-        st.subheader("Ammu - ZLD Project Execution")
-        zld_data = fetch_logs("bg-zld-logs", "project_execution.csv")
-        if not zld_data.empty:
-            st.dataframe(zld_data.sort_values(by="Timestamp", ascending=False), use_container_width=True)
-        else:
-            st.info("No ZLD logs found.")
-
-    with tab_pur:
-        st.subheader("Santhoshi - Site Dependencies & Ops")
-        dep_data = fetch_logs("bg-purchase-master", "dependencies.csv")
-        if not dep_data.empty:
-            st.write("🔴 **Open Dependencies**")
-            st.dataframe(dep_data.sort_values(by="Timestamp", ascending=False), use_container_width=True)
-        
-        man_data = fetch_logs("bg-purchase-master", "manpower_logs.csv")
-        if not man_data.empty:
-            st.write("👷 **Manpower History**")
-            st.table(man_data.tail(10)) # Show last 10 entries for manpower
-
-    st.divider()
-    # Master Download Button
-    if st.button("📥 Download All Factory Data (Excel)"):
-        st.success("Consolidating files for download...")
+# --- UPDATED SYNC BUTTON (Inside Kishore/Ammu Section) ---
+# When you define your form, add the 'clear_on_submit' or use this logic:
+if st.form_submit_button("🚀 Sync API Master Report"):
+    # ... (Your existing Sync Logic) ...
+    
+    st.success("✅ Sync Successful! Clearing form for next entry...")
+    st.balloons()
+    
+    # Force a rerun to clear the cells
+    st.rerun()
