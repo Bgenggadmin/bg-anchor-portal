@@ -155,6 +155,7 @@ elif role == "ZLD (Ammu)":
                        file_name=f"Ammu_ZLD_Report_{date.today()}.xlsx", mime="application/vnd.ms-excel")
 
 # --- 7. ROLE: PURCHASE (SANTHOSHI) ---
+# --- 7. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
     st.header("📦 Purchase & Operations - Santhoshi")
     sk = st.session_state.sync_count 
@@ -168,10 +169,11 @@ elif role == "Purchase (Santhoshi)":
 
     # 2. CRITICAL MACHINERY RUNNING STATUS
     st.subheader("⚙️ 2. Critical Machinery Running Status")
+    # Default rows provided for ease of use
     ops_df = pd.DataFrame([
-        {"Asset": "Plasma Machine", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"},
-        {"Asset": "EOT Crane", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"},
-        {"Asset": "Site Vehicle", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": "None"}
+        {"Asset": "Plasma Machine", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": ""},
+        {"Asset": "EOT Crane", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": ""},
+        {"Asset": "Site Vehicle", "Status": "Working", "Production_Impacted": "No", "Risks_Next_2_3_Days": "Low", "Issue": ""}
     ])
     
     ops_data = st.data_editor(
@@ -195,16 +197,25 @@ elif role == "Purchase (Santhoshi)":
         dec_det_p = st.text_area("Decision Details (if Yes)")
 
         if st.form_submit_button("🚀 Sync Purchase Report"):
-            valid_pur = ops_data.copy()
-            valid_pur["Planned_MP"] = planned
-            valid_pur["Actual_MP"] = actual
-            valid_pur["Temp_Used"] = temp_mp
-            valid_pur["Absentees"] = absentees
-            valid_pur["Operations_Updates"] = site_events
-            valid_pur["Founder_Decision"] = f_dec_p
-            valid_pur["Decision_Context"] = dec_det_p
+            # FIX: Filter rows to only save machines that are NOT "Working" or have an "Issue" typed
+            valid_machinery = ops_data[(ops_data["Status"] != "Working") | (ops_data["Issue"] != "")].copy()
+            
+            # If all machines are working fine, we create a single row for Manpower/Updates
+            if valid_machinery.empty:
+                final_sync_df = pd.DataFrame([{"Asset": "General Site Update", "Status": "Working"}])
+            else:
+                final_sync_df = valid_machinery
 
-            if sync_to_private_file(valid_pur, "purchase_report.csv"):
+            # Attach Manpower and Remarks to the synced rows
+            final_sync_df["Planned_MP"] = planned
+            final_sync_df["Actual_MP"] = actual
+            final_sync_df["Temp_Used"] = temp_mp
+            final_sync_df["Absentees"] = absentees
+            final_sync_df["Operations_Updates"] = site_events
+            final_sync_df["Founder_Decision"] = f_dec_p
+            final_sync_df["Decision_Context"] = dec_det_p
+
+            if sync_to_private_file(final_sync_df, "purchase_report.csv"):
                 st.success("✅ Purchase Log Updated! Data Cleared.")
                 st.session_state.sync_count += 1
                 st.rerun()
@@ -215,23 +226,20 @@ elif role == "Purchase (Santhoshi)":
     pur_history = fetch_logs("purchase_report.csv")
     
     if not pur_history.empty:
-        # Create Subheading Tabs
         p_tab1, p_tab2, p_tab3 = st.tabs(["👷 Manpower Logs", "⚙️ Machinery Status", "🧠 Management Decisions"])
         
         with p_tab1:
-            # Show Manpower related columns only
             manpower_cols = ["Entry_Date", "Timestamp", "Planned_MP", "Actual_MP", "Temp_Used", "Absentees"]
-            st.dataframe(pur_history[manpower_cols], use_container_width=True)
+            st.dataframe(pur_history[manpower_cols].drop_duplicates(), use_container_width=True)
             
         with p_tab2:
-            # Show Machinery status related columns
             machinery_cols = ["Entry_Date", "Asset", "Status", "Production_Impacted", "Risks_Next_2_3_Days", "Issue"]
-            st.dataframe(pur_history[machinery_cols], use_container_width=True)
+            # Only show rows that actually reported a machine status/issue
+            st.dataframe(pur_history[pur_history["Asset"] != "General Site Update"][machinery_cols], use_container_width=True)
             
         with p_tab3:
-            # Show Decision and Operations updates
             decision_cols = ["Entry_Date", "Operations_Updates", "Founder_Decision", "Decision_Context"]
-            st.dataframe(pur_history[decision_cols], use_container_width=True)
+            st.dataframe(pur_history[decision_cols].drop_duplicates(), use_container_width=True)
 
         # ANCHOR EXCEL DOWNLOAD
         p_buffer = io.BytesIO()
@@ -240,6 +248,7 @@ elif role == "Purchase (Santhoshi)":
         
         st.download_button(label="📥 Download My Purchase Log (Excel)", data=p_buffer.getvalue(),
                            file_name=f"Santhoshi_Purchase_Log_{date.today()}.xlsx", mime="application/vnd.ms-excel")
+
 # --- 8. FOUNDER DASHBOARD ---
 else:
     st.header("📊 Founder Master Overview")
