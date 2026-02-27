@@ -10,36 +10,39 @@ st.set_page_config(page_title="B&G Digital Portal", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 now_ist = datetime.now(IST)
 
-# --- 2. ENGINES: GITHUB SYNC & WHATSAPP ---
+# --- 2. ENGINES: GITHUB SYNC & READER ---
 def sync_data_to_github(repo_name, file_name, new_data_df, anchor_name):
     try:
         g = Github(st.secrets["GITHUB_TOKEN"])
         repo = g.get_repo(f"Bgenggadmin/{repo_name}")
-        
-        # Get existing file content
         file_contents = repo.get_contents(file_name)
         existing_data = pd.read_csv(io.StringIO(file_contents.decoded_content.decode()))
         
-        # Add timestamp and metadata
         new_data_df['Timestamp'] = datetime.now(IST).strftime("%Y-%m-%d %H:%M")
         new_data_df['Anchor'] = anchor_name
         
-        # Merge and Update
         updated_df = pd.concat([existing_data, new_data_df], ignore_index=True)
         repo.update_file(
             path=file_contents.path,
-            message=f"EOD Update from {anchor_name} - {datetime.now(IST).strftime('%Y-%m-%d')}",
+            message=f"Update from {anchor_name} - {datetime.now(IST).strftime('%Y-%m-%d')}",
             content=updated_df.to_csv(index=False),
             sha=file_contents.sha
         )
         return True
     except Exception as e:
-        st.error(f"Sync Failed for {file_name}: {e}")
+        st.error(f"Sync Failed: {e}")
         return False
 
+def fetch_logs(repo_name, file_name):
+    try:
+        g = Github(st.secrets["GITHUB_TOKEN"])
+        repo = g.get_repo(f"Bgenggadmin/{repo_name}")
+        contents = repo.get_contents(file_name)
+        return pd.read_csv(io.StringIO(contents.decoded_content.decode()))
+    except:
+        return pd.DataFrame()
+
 def trigger_whatsapp_notification(anchor, context):
-    # This is a placeholder for your WhatsApp API call
-    # Logic: If Founder Decision == YES, trigger this
     st.warning(f"📲 WhatsApp Notification Queued for Founder: [{anchor}] {context}")
 
 # --- 3. SIDEBAR NAVIGATION ---
@@ -52,7 +55,8 @@ st.divider()
 # --- 4. ROLE: API (KISHORE) ---
 if role == "API (Kishore)":
     st.header("🏢 API Site Entry - Kishore Anchor")
-
+    
+    # Critical Purchase Integration
     st.subheader("🔴 Critical Purchase Dependencies")
     api_dep_df = pd.DataFrame([{"Project/Job": "", "Material Required": "", "Req_Date": "", "PO_Ref": "Pending", "Urgency": "High"}])
     api_dep_data = st.data_editor(api_dep_df, num_rows="dynamic", use_container_width=True, key="api_dep")
@@ -93,14 +97,17 @@ if role == "API (Kishore)":
             if founder_dec == "YES":
                 trigger_whatsapp_notification("Kishore (API)", dec_context)
             
-            # Filter and Sync logic here
-            st.success("API Master Report Sync Initiated...")
-            st.balloons()
+            # Sync Engineering Logic
+            valid_eng = api_eng_data[api_eng_data["Job"] != ""]
+            if not valid_eng.empty:
+                sync_data_to_github("bg-api-logs", "engineering_audit.csv", valid_eng, "Kishore")
+            
+            st.success("API Report Synced!")
+            st.rerun() # This clears the cells after success
 
 # --- 5. ROLE: ZLD (AMMU) ---
 elif role == "ZLD (Ammu)":
     st.header("💧 ZLD Site Entry - Ammu Anchor")
-
     st.subheader("🔴 Purchase Integration")
     zld_dep_df = pd.DataFrame([{"Project": "", "Component Required": "", "Required Date": "", "Urgency": "Medium"}])
     zld_dep_data = st.data_editor(zld_dep_df, num_rows="dynamic", use_container_width=True, key="zld_dep")
@@ -115,21 +122,19 @@ elif role == "ZLD (Ammu)":
         zld_proj_data = st.data_editor(zld_proj_df, num_rows="dynamic", use_container_width=True, key="zld_proj")
 
         updates = st.text_area("'UPDATES' (Major Site Events)")
-        
-        c5, c6 = st.columns(2)
-        f_dec_z = c5.selectbox("Founder Decision Required", ["NO", "YES"])
-        dec_det_z = c6.text_input("Decision Details")
+        f_dec_z = st.selectbox("Founder Decision Required", ["NO", "YES"])
+        dec_det_z = st.text_input("Decision Details")
 
         if st.form_submit_button("Sync ZLD Report"):
-            if f_dec_z == "YES":
-                trigger_whatsapp_notification("Ammu (ZLD)", dec_det_z)
-            st.success("ZLD Data Synced.")
+            valid_zld = zld_proj_data[zld_proj_data["Project Name"] != ""]
+            if not valid_zld.empty:
+                sync_data_to_github("bg-zld-logs", "project_execution.csv", valid_zld, "Ammu")
+            st.success("ZLD Data Synced!")
+            st.rerun()
 
 # --- 6. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
     st.header("📦 Purchase & Operations - Santhoshi")
-    st.warning("🔔 Check Management Dashboard for technical dependencies.")
-
     with st.form("purchase_form"):
         st.subheader("👷 Manpower Tracking")
         p1, p2, p3 = st.columns(3)
@@ -138,26 +143,39 @@ elif role == "Purchase (Santhoshi)":
         temp_mp = p3.selectbox("Temp Manpower Used", ["No", "Yes"])
 
         st.subheader("⚙️ Operations & Site Status")
-        st.write("📊 **Machine & Transport Status**")
         ops_df = pd.DataFrame([{"Asset": "Plasma Machine", "Status": "Working", "Issue": "None"}])
         ops_data = st.data_editor(ops_df, num_rows="dynamic", use_container_width=True, key="ops_table")
 
         absentees = st.text_area("Absentees Details")
-
-        st.subheader("🧠 Management & Decisions")
         f_dec_p = st.selectbox("Founder Decision Required", ["No", "Yes"])
         dec_det_p = st.text_input("Decision Details")
         
         if st.form_submit_button("Sync Purchase Log"):
-            if f_dec_p == "Yes":
-                trigger_whatsapp_notification("Santhoshi (Purchase)", dec_det_p)
             st.success("Operations Log Updated.")
+            st.rerun()
 
 # --- 7. MANAGEMENT DASHBOARD ---
 else:
     st.header("📊 B&G Management Analytics")
     st.write(f"Reporting Date: {now_ist.strftime('%Y-%m-%d')}")
-    st.info("Consolidating data from all anchors...")
+    
+    st.subheader("🏗️ API Engineering Logs")
+    df_api = fetch_logs("bg-api-logs", "engineering_audit.csv")
+    if not df_api.empty:
+        st.dataframe(df_api.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+    
+    st.subheader("💧 ZLD Project Status")
+    df_zld = fetch_logs("bg-zld-logs", "project_execution.csv")
+    if not df_zld.empty:
+        st.dataframe(df_zld.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+
     st.divider()
-    # Logic to read CSVs from GitHub and display them would go here
     st.button("📥 Download Master EOD Report (Excel)")
+
+# --- 8. GLOBAL SUMMARY TABLE (SHOWS AT BOTTOM OF ALL PAGES) ---
+st.divider()
+st.subheader("📋 Live Factory Overview (EOD Summary)")
+all_api = fetch_logs("bg-api-logs", "engineering_audit.csv")
+if not all_api.empty:
+    st.write("**Recent Engineering Clarifications:**")
+    st.dataframe(all_api.tail(5), use_container_width=True)
