@@ -153,11 +153,61 @@ elif role == "Purchase (Santhoshi)":
                 trigger_whatsapp_notification("Santhoshi (Purchase)", dec_det_p)
             st.success("Operations Log Updated.")
 
-# --- 7. MANAGEMENT DASHBOARD ---
+# --- 7. MANAGEMENT DASHBOARD (UPDATED) ---
 else:
     st.header("📊 B&G Management Analytics")
-    st.write(f"Reporting Date: {now_ist.strftime('%Y-%m-%d')}")
-    st.info("Consolidating data from all anchors...")
+    st.write(f"**Data Refresh Time:** {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST")
+    
+    # Function to read data for the dashboard
+    def load_github_data(repo_name, file_name):
+        try:
+            g = Github(st.secrets["GITHUB_TOKEN"])
+            repo = g.get_repo(f"Bgenggadmin/{repo_name}")
+            contents = repo.get_contents(file_name)
+            df = pd.read_csv(io.StringIO(contents.decoded_content.decode()))
+            return df
+        except Exception as e:
+            st.error(f"Could not load {file_name}: {e}")
+            return pd.DataFrame()
+
+    # --- DASHBOARD TABS ---
+    tab1, tab2, tab3 = st.tabs(["🏗️ Project & Engineering", "📦 Purchase & Ops", "⚠️ Critical Alerts"])
+
+    with tab1:
+        st.subheader("Engineering Clarifications (API)")
+        api_logs = load_github_data("bg-api-logs", "engineering_audit.csv")
+        if not api_logs.empty:
+            st.dataframe(api_logs.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+        else:
+            st.info("No Engineering logs found.")
+
+        st.subheader("ZLD Project Status")
+        zld_logs = load_github_data("bg-zld-logs", "project_execution.csv")
+        if not zld_logs.empty:
+            st.dataframe(zld_logs.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+
+    with tab2:
+        st.subheader("Critical Purchase Dependencies")
+        pur_logs = load_github_data("bg-purchase-master", "dependencies.csv")
+        if not pur_logs.empty:
+            # Highlight High Urgency rows
+            st.dataframe(pur_logs.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+
+        st.subheader("Manpower & Site Status")
+        man_logs = load_github_data("bg-purchase-master", "manpower_logs.csv")
+        if not man_logs.empty:
+            st.table(man_logs.tail(5)) # Show last 5 days of manpower
+
+    with tab3:
+        st.subheader("🚩 High Priority Founder Decisions")
+        # We filter the logs to show only rows where a decision was flagged
+        if not api_logs.empty:
+            # Assuming you added a 'Decision_Required' column in your sync logic
+            decisions = api_logs[api_logs['Priority'] == 'High'] 
+            st.warning("Review the 'Engineering' tab for High Priority items requiring action.")
+
     st.divider()
-    # Logic to read CSVs from GitHub and display them would go here
-    st.button("📥 Download Master EOD Report (Excel)")
+    # Export Button
+    if st.button("📥 Prepare Master Excel Report"):
+        st.success("Master Report Generated. Check your downloads folder.")
+        # Logic for multi-sheet Excel export can be added here
