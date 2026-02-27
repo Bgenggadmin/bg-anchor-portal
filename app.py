@@ -15,11 +15,11 @@ role = st.sidebar.radio("Select Anchor Role:",
 
 st.divider()
 
-# --- 1. KISHORE (API) - ALL 23 COLUMNS ---
+# --- 1. KISHORE (API) - 23 COLUMN STRUCTURE (FREEZED) ---
 if role == "API (Kishore)":
     st.header("API Site Entry - Kishore Anchor")
     
-    # TRIGGER OUTSIDE FORM FOR INSTANT PROMPT
+    # Instant Trigger for Purchase Integration
     st.subheader("Operational & Purchase Integration")
     has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True, key="api_dep")
     if has_dependency == "YES":
@@ -59,16 +59,17 @@ if role == "API (Kishore)":
         dec_det = st.text_input("Decision Details / Context")
 
         if st.form_submit_button("Sync API Report"):
-            st.success("API Data recorded.")
+            st.success("Kishore's API Data recorded.")
 
-# --- 2. AMMU (ZLD) - ALL 18 COLUMNS ---
+# --- 2. AMMU (ZLD) - 18 COLUMN STRUCTURE (FREEZED) ---
 elif role == "ZLD (Ammu)":
     st.header("ZLD Site Entry - Ammu Anchor")
     
+    # Instant Trigger for Purchase Integration
     st.subheader("Purchase Integration")
     has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True, key="zld_dep")
     if has_dep_zld == "YES":
-        crit_dep_zld = st.text_area("🔴 List: Project Name vs Requirement")
+        crit_dep_zld = st.text_area("🔴 List: Project Name vs Requirement", placeholder="e.g. MSN Oncology: Centrifugal Pump PO")
 
     with st.form("zld_form"):
         st.subheader("Enquiry & Design Status")
@@ -77,49 +78,58 @@ elif role == "ZLD (Ammu)":
         off_iss_z = z2.text_input("Offers Issued")
         off_rev_z = z3.text_input("Offers Under Review")
 
-        st.subheader("Project Execution")
         z4, z5, z6 = st.columns(3)
-        active_proj = z4.selectbox("Active Project", ["150 KLD MEE-MSN", "30KL OIL SYSTEM", "Other"])
-        stage = z5.text_input("Project Stage")
-        sch_risk = z6.selectbox("Schedule Risk", ["NO", "YES"])
+        off_15d = z4.text_input("Offers > 15 Days")
+        des_comp = z5.text_input("Designs Completed")
+        des_rev_z = z6.text_input("Designs Under Review")
+
+        st.subheader("Project Execution")
+        z7, z8, z9 = st.columns(3)
+        active_proj = z7.selectbox("Active Project", ["150 KLD MEE-MSN", "30KL OIL SYSTEM", "20KLD MEE-MSN", "Other"])
+        stage = z8.text_input("Project Stage")
+        sch_risk = z9.selectbox("Schedule Risk", ["NO", "YES"])
 
         updates = st.text_area("'UPDATES' (Major Site Events)")
+        
+        st.subheader("Management & Decisions")
         f_dec_z = st.selectbox("Founder Decision Required", ["NO", "YES"])
         dec_det_z = st.text_input("Decision Details")
 
         if st.form_submit_button("Sync ZLD Report"):
-            st.success("ZLD Report successfully synced.")
+            st.success("Ammu's ZLD Report successfully synced.")
 
-# --- 3. SANTHOSHI (PURCHASE) - ALL 14 COLUMNS ---
+# --- 3. SANTHOSHI (PURCHASE) - 14 COLUMN STRUCTURE (FREEZED) ---
 elif role == "Purchase (Santhoshi)":
-    st.header("Purchase & Operations Control")
-    st.info("Dependencies from Kishore/Ammu will reflect here.")
+    st.header("Purchase & Operations Entry - Santhoshi")
+    st.info("Dependencies flagged by Technical Anchors will appear in the Management Dashboard.")
 
     with st.form("purchase_form"):
-        st.subheader("Manpower & Site Status")
+        st.subheader("Manpower Tracking")
         p1, p2, p3 = st.columns(3)
         planned = p1.number_input("Planned Manpower", value=62)
         actual = p2.number_input("Actual Manpower", value=52)
         temp_mp = p3.selectbox("Temp Manpower Used", ["No", "Yes"])
 
-        st.subheader("Operations Tracking")
+        st.subheader("Operations & Site Status")
         p4, p5, p6 = st.columns(3)
         crit_machines = p4.text_input("Critical Machines Status")
         downtime = p5.text_input("Breakdown / Downtime")
         transp = p6.text_input("Transportation Status")
 
-        p7, p8 = st.columns(2)
+        p7, p8, p9 = st.columns(3)
         prod_supp = p7.selectbox("Production Supported", ["Yes", "No"])
         site_imp = p8.selectbox("Site Impacted", ["No", "Yes"])
-        
-        absentees = st.text_area("Absentees Details")
+        absentees = p9.text_area("Absentees Details")
+
+        st.subheader("Management & Decisions")
         f_dec_p = st.selectbox("Founder Decision Required", ["No", "Yes"])
         dec_det_p = st.text_input("Decision Details")
         
         if st.form_submit_button("Sync Purchase Log"):
-            st.success("Daily Operations Log Updated.")
+            st.success("Santhoshi's Operations Log Updated.")
 
 # --- 4. MANAGEMENT DASHBOARD ---
 else:
     st.header("B&G Management Analytics")
-    st.write("Full EOD report summary.")
+    st.write("Full EOD report summary across all departments.")
+    st.download_button("📥 Export Master Excel Report", "Date,Anchor,Project,Critical_Dependency\n2026-02-27,API,10KL,Pumps", "bg_master.csv")
