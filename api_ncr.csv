@@ -1,2 +1,2 @@
-Category,Detail,Impact,NCR_Status,Entry_Date,Timestamp,Date
-Material,TEST,NO,,,12:02,2026-02-27
+Category,Detail,Impact,Entry_Date,Timestamp,NCR_Status,Date
+Material,TEST,NO,,12:02,,2026-02-27
