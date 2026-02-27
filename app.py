@@ -89,23 +89,70 @@ if role == "API (Kishore)":
 # --- 6. ROLE: ZLD (AMMU) ---
 elif role == "ZLD (Ammu)":
     st.header("💧 ZLD Site Entry - Ammu Anchor")
-    # ZLD Specific Tables
-    zld_proj = st.data_editor(pd.DataFrame([{"Project": "", "Stage": "Fabrication", "Target_Date": date.today(), "Risk": "No"}]), 
-                              num_rows="dynamic", use_container_width=True, key=f"zld_{sk}",
+    sk = st.session_state.sync_count 
+
+    # 1. PURCHASE INTEGRATION
+    st.subheader("🔴 1. Purchase Integration (ZLD)")
+    zld_pur_df = pd.DataFrame([{"Project": "", "Component": "", "Req_Date": date.today(), "Urgency": "Medium"}])
+    zld_pur = st.data_editor(zld_pur_df, num_rows="dynamic", use_container_width=True, key=f"z_pur_{sk}",
+                             column_config={"Req_Date": st.column_config.DateColumn("Required Date", format="YYYY-MM-DD")})
+
+    # 2. ENQUIRY & DESIGN STATUS
+    st.subheader("📈 2. Enquiry & Design Status")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.write("📝 Sales Tracking")
+        z_enq = st.data_editor(pd.DataFrame([{"Client": "", "Offer_Status": "Pending"}]), num_rows="dynamic", key=f"z_enq_{sk}")
+    with c2:
+        st.write("📐 Design Stage")
+        z_dwg = st.data_editor(pd.DataFrame([{"Project": "", "Dwg_Stage": "Initial"}]), num_rows="dynamic", key=f"z_dwg_{sk}")
+
+    # 3. PROJECT EXECUTION & RISKS
+    st.subheader("🏗️ 3. Project Execution & Risks")
+    zld_proj_df = pd.DataFrame([{"Project_Name": "", "Stage": "Fabrication", "Target_Date": date.today(), "Risk": "No"}])
+    zld_proj = st.data_editor(zld_proj_df, num_rows="dynamic", use_container_width=True, key=f"z_proj_{sk}",
                               column_config={"Target_Date": st.column_config.DateColumn("Target Date", format="YYYY-MM-DD")})
-    
-    with st.form(f"zld_f_{sk}"):
-        zld_updates = st.text_area("Site Updates / Bottlenecks")
+
+    # 4. SITE UPDATES & FOUNDER DECISIONS
+    st.subheader("🧠 4. Site Updates & Decisions")
+    with st.form(f"zld_form_{sk}"):
+        zld_updates = st.text_area("Major Site Events / Bottlenecks Today")
+        f_dec_z = st.selectbox("Founder Decision Required?", ["NO", "YES"])
+        dec_context_z = st.text_area("Decision Context (if YES)")
+
         if st.form_submit_button("🚀 Sync ZLD Report"):
-            valid_zld = zld_proj[zld_proj["Project"] != ""].copy()
+            # Sync tables to separate CSVs to keep them clean
+            sync_to_private_file(zld_pur[zld_pur["Project"] != ""], "zld_purchase.csv")
+            sync_to_private_file(z_enq[z_enq["Client"] != ""], "zld_enquiries.csv")
+            sync_to_private_file(z_dwg[z_dwg["Project"] != ""], "zld_drawings.csv")
+            
+            # Combine execution and decision into one report
+            valid_zld = zld_proj[zld_proj["Project_Name"] != ""].copy()
             valid_zld["Updates"] = zld_updates
+            valid_zld["Decision_Req"] = f_dec_z
+            valid_zld["Decision_Details"] = dec_context_z
+            
             if sync_to_private_file(valid_zld, "zld_report.csv"):
-                st.success("✅ ZLD Data Synced!")
+                st.success("✅ ZLD Data Synced Successfully!")
                 st.session_state.sync_count += 1
                 st.rerun()
+
+    # 5. ZLD SUMMARY TABLES
+    st.divider()
+    st.subheader("📋 Your Recent ZLD Submission Logs")
+    tabs = st.tabs(["Purchase", "Sales", "Projects", "Updates"])
+    tabs[0].dataframe(fetch_logs("zld_purchase.csv"), use_container_width=True)
+    tabs[1].dataframe(fetch_logs("zld_enquiries.csv"), use_container_width=True)
+    tabs[2].dataframe(fetch_logs("zld_report.csv"), use_container_width=True)
     
-    st.subheader("📋 Your Recent ZLD Logs")
-    st.dataframe(fetch_logs("zld_report.csv"), use_container_width=True)
+    # ZLD EXCEL DOWNLOAD
+    z_buffer = io.BytesIO()
+    with pd.ExcelWriter(z_buffer, engine='xlsxwriter') as writer:
+        fetch_logs("zld_purchase.csv").to_excel(writer, sheet_name='Purchase', index=False)
+        fetch_logs("zld_report.csv").to_excel(writer, sheet_name='Projects', index=False)
+    
+    st.download_button(label="📥 Download My ZLD Log (Excel)", data=z_buffer.getvalue(),
+                       file_name=f"Ammu_ZLD_Report_{date.today()}.xlsx", mime="application/vnd.ms-excel")
 
 # --- 7. ROLE: PURCHASE (SANTHOSHI) ---
 elif role == "Purchase (Santhoshi)":
