@@ -29,17 +29,14 @@ if role == "API (Kishore)":
         mfg_plan = st.text_area("Manufacturing Planned vs Actual")
 
         st.subheader("Operational & Purchase Integration")
-        proj_code = st.text_input("Project Code(s)", placeholder="e.g. BG-01, BG-05")
-        
         # CONDITIONAL TRIGGER
         has_dependency = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
         
         if has_dependency == "YES":
-            crit_dep = st.text_area("🔴 List Items & Affected Project Codes", 
-                placeholder="e.g.\n1. 8mm 316 Plate (Codes: BG-01, BG-02)\n2. 5HP Motor (Code: BG-05)")
-        else:
-            st.info("No purchase dependencies flagged for these projects.")
-
+            # Direct text entry for Project vs Requirement
+            crit_dep = st.text_area("🔴 List: Project Name vs Requirement", 
+                placeholder="e.g.\nMSN Maithri: 8mm 316 Plate\n30KL Oil System: 5HP Motor")
+        
         st.subheader("Management & Decisions")
         f_dec = st.selectbox("Founder Decision Required", ["NO", "YES"])
         dec_det = st.text_input("Decision Details / Context")
@@ -52,18 +49,15 @@ elif role == "ZLD (Ammu)":
     st.header("ZLD Site Entry - Ammu Anchor")
     with st.form("zld_form"):
         st.subheader("Project Execution")
-        z1, z2 = st.columns(2)
-        proj_code = z1.text_input("Project Code(s)")
-        stage = z2.text_input("Project Stage")
-
+        stage = st.text_input("Project Stage (e.g. Commissioning)")
         updates = st.text_area("'UPDATES' (Major Site Events)")
         
         # CONDITIONAL TRIGGER
         has_dep_zld = st.radio("Any Critical Purchase Dependency?", ["NO", "YES"], horizontal=True)
         
         if has_dep_zld == "YES":
-            crit_dep_zld = st.text_area("🔴 List Items & Affected Project Codes", 
-                placeholder="Enter specific material needs here...")
+            crit_dep_zld = st.text_area("🔴 List: Project Name vs Requirement", 
+                placeholder="e.g. MSN Oncology: Centrifugal Pump PO")
         
         if st.form_submit_button("Sync ZLD Report"):
             st.success("ZLD Report successfully synced.")
@@ -73,7 +67,7 @@ elif role == "Purchase (Santhoshi)":
     st.header("Purchase & Operations Control")
     
     st.subheader("⚠️ High-Priority Site Dependencies")
-    st.error("Site Anchors will flag 'YES' if they are stuck for materials like 316 Plates or Motors.")
+    st.info("If Kishore or Ammu flagged 'YES', their Project vs Requirement list will appear here.")
     
     with st.form("purchase_form"):
         p1, p2 = st.columns(2)
@@ -81,6 +75,7 @@ elif role == "Purchase (Santhoshi)":
         actual = p2.number_input("Actual Manpower", value=52)
         
         absentees = st.text_area("Absentees Details")
+        crit_machines = st.text_input("Critical Machines Status")
         
         if st.form_submit_button("Sync Purchase Log"):
             st.success("Daily Operations Log Updated.")
@@ -88,4 +83,4 @@ elif role == "Purchase (Santhoshi)":
 # --- 4. MANAGEMENT DASHBOARD ---
 else:
     st.header("B&G Management Analytics")
-    st.write("Reviewing EOD logs across all Project Codes.")
+    st.write("Reviewing EOD logs for B&G Engineering Industries.")
