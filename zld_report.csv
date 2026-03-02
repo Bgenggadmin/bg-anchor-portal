@@ -1,11 +1,12 @@
-Project_Name,Stage,Target_Date,Risk,Offers_Today,New_Enq_Today,Client_Calls,Designs_In_Review,Clarifications_Pending,Updates,Decision_Req,Decision_Details,Entry_Date,Timestamp,Designs_Under_Review,Daily_Updates,Founder_Decision
-Jitech India,Commissioning,2026-03-21,Yes,1,0,1,0.0,0,Planning site visit tmw on 03.03.2026 with Rolon seals person & risen person but waiting for roto dyne person support.,YES,"Pumps observed seal leakages, Seals person is engaged but for pump dismantling and assembling roto dyne support required but asking for pending payment.",2026-03-02,12:07,,,
-MSN-Rudraram,Handover,2026-03-14,No,1,2,1,1.0,1,,NO,,2026-02-28,15:52,,,
-JI-Tech India Pvt Ltd,Commissioning,2026-03-21,Pumps issues-Waiting for rotodyne support,1,2,1,1.0,1,,NO,,2026-02-28,15:52,,,
-MSN-Oncology,Commissioning,2026-03-28,No,1,2,1,1.0,1,,NO,,2026-02-28,15:52,,,
-General Site Update,,,,0,0,0,1.0,1,,NO,,2026-02-27,17:36,,,
-General Site Update,,,,0,0,0,0.0,0,,NO,,2026-02-27,17:35,,,
-General Site Update,,,,0,0,0,0.0,0,Visited oncology site yesterday-planning to start trails in next week (1st week of march),NO,,2026-02-27,15:46,,,
-Maithri Drugs- 12.5SQM ATFD Repair Job,Fabrication,2026-03-06,yes,0,1,1,0.0,0,Visited rudraram site regarding pending ways automation activities,NO,,2026-02-27,15:42,,,
-JI TECH,TRIAL RUNS,2026-02-27,No,1,2,3,2.0,1,MMSN 150 KLD VAC PUMP,NO,SENT TO SERVICE,2026-02-27,14:13,,,
-JI TECH,HANDING OVER,2026-03-06,No,1,1,4,,2,,,,2026-02-27,13:56,2.0,JI tech trial runs going on,NO
+Project_Name,Offers_Today,New_Enq_Today,Client_Calls,Designs_In_Review,Clarifications_Pending,Updates,Decision_Req,Decision_Details,Entry_Date,Timestamp,Stage,Target_Date,Risk,Designs_Under_Review,Daily_Updates,Founder_Decision
+General Site Update,0,0,0,0.0,0,Vaccum pump for neotrafo,YES,"Rotary vane vacuum pump from new supplier- waiting for advance, then they will start working.",2026-03-02,13:52,,,,,,
+Jitech India,1,0,1,0.0,0,Planning site visit tmw on 03.03.2026 with Rolon seals person & risen person but waiting for roto dyne person support.,YES,"Pumps observed seal leakages, Seals person is engaged but for pump dismantling and assembling roto dyne support required but asking for pending payment.",2026-03-02,12:07,Commissioning,2026-03-21,Yes,,,
+MSN-Rudraram,1,2,1,1.0,1,,NO,,2026-02-28,15:52,Handover,2026-03-14,No,,,
+JI-Tech India Pvt Ltd,1,2,1,1.0,1,,NO,,2026-02-28,15:52,Commissioning,2026-03-21,Pumps issues-Waiting for rotodyne support,,,
+MSN-Oncology,1,2,1,1.0,1,,NO,,2026-02-28,15:52,Commissioning,2026-03-28,No,,,
+General Site Update,0,0,0,1.0,1,,NO,,2026-02-27,17:36,,,,,,
+General Site Update,0,0,0,0.0,0,,NO,,2026-02-27,17:35,,,,,,
+General Site Update,0,0,0,0.0,0,Visited oncology site yesterday-planning to start trails in next week (1st week of march),NO,,2026-02-27,15:46,,,,,,
+Maithri Drugs- 12.5SQM ATFD Repair Job,0,1,1,0.0,0,Visited rudraram site regarding pending ways automation activities,NO,,2026-02-27,15:42,Fabrication,2026-03-06,yes,,,
+JI TECH,1,2,3,2.0,1,MMSN 150 KLD VAC PUMP,NO,SENT TO SERVICE,2026-02-27,14:13,TRIAL RUNS,2026-02-27,No,,,
+JI TECH,1,1,4,,2,,,,2026-02-27,13:56,HANDING OVER,2026-03-06,No,2.0,JI tech trial runs going on,NO
